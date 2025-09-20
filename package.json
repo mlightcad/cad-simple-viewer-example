@@ -1,0 +1,28 @@
+{
+  "name": "@mlightcad/cad-simple-viewer-example",
+  "version": "0.0.1",
+  "license": "MIT",
+  "type": "module",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/mlight-lee/cad-simple-viewer-example"
+  },
+  "scripts": {
+    "build": "vue-tsc && vite build",
+    "dev": "vite",
+    "preview": "vite preview"
+  },
+  "devDependencies": {
+    "@mlightcad/common": "1.2.0",
+    "@mlightcad/geometry-engine": "3.0.0",
+    "@mlightcad/graphic-interface": "3.0.0",
+    "typescript": "^5.5.2",
+    "vite": "^5.4.19",
+    "vite-plugin-static-copy": "^3.1.1",
+    "vue-tsc": "^2.1.6"
+  },
+  "dependencies": {
+    "@mlightcad/cad-simple-viewer": "1.0.21",
+    "@mlightcad/data-model": "1.2.8"
+  }
+}
