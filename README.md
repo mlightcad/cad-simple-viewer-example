@@ -29,7 +29,7 @@ pnpm preview
 
 ### Basic Usage
 
-Firstly, add the following dependencies into your package.json.
+Firstly, add the following dependencies into your `package.json`.
 
 - @mlightcad/cad-simple-viewer
 - @mlightcad/data-model
@@ -135,6 +135,12 @@ This capability makes `cad-simple-viewer` suitable for applications that need to
 
 #### Example: Adding Entities
 
+If you want to create, modify, or delete entities in the drawing, please add the following dependencies into your `package.json` as `devDependencies` so that types needed can be found.
+
+- @mlightcad/common
+- @mlightcad/geometry-engine
+- @mlightcad/graphic-interface
+
 The following code demonstrates how to add entities, following the same pattern you'd use in AutoCAD RealDWG:
 
 ```typescript
@@ -142,7 +148,7 @@ import { AcApDocManager } from '@mlightcad/cad-simple-viewer'
 import { AcDbLine, AcDbCircle, AcDbText, AcGePoint3d, AcGeVector3d } from '@mlightcad/data-model'
 
 // Get the current document (same as RealDWG)
-const doc = AcApDocManager.instance.activeDocument
+const doc = AcApDocManager.instance.curDocument
 if (!doc) return
 
 // Get the model space (identical to RealDWG pattern)
@@ -176,4 +182,4 @@ Please refer to class [DocCreator](./src/docCreator.ts) to get one full example 
 
 ## License
 
-MIT License - see the main project LICENSE file for details. 
+[MIT](LICENSE)
