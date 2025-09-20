@@ -9,8 +9,8 @@ importers:
   .:
     dependencies:
       '@mlightcad/cad-simple-viewer':
-        specifier: 1.0.21
-        version: 1.0.21(@mlightcad/data-model@1.2.8)(@mlightcad/libredwg-web@0.2.1)(@mlightcad/mtext-renderer@0.5.0(three@0.172.0))(lodash-es@4.17.21)(three@0.172.0)
+        specifier: 1.0.22
+        version: 1.0.22(@mlightcad/data-model@1.2.8)(@mlightcad/libredwg-web@0.2.1)(@mlightcad/mtext-renderer@0.5.0(three@0.172.0))(lodash-es@4.17.21)(three@0.172.0)
       '@mlightcad/data-model':
         specifier: 1.2.8
         version: 1.2.8
@@ -201,8 +201,8 @@ packages:
     resolution: {integrity: sha512-Z7C/xXCiGWsg0KuKsHTKJxbWhpI3Vs5GwLfOean7MGyVFGqdRgBbAjOCh6u4bbjPc/8MJ2pZmK/0DLdCbivLDA==}
     engines: {node: '>=8'}
 
-  '@mlightcad/cad-simple-viewer@1.0.21':
-    resolution: {integrity: sha512-5/wWCZFpR/nMWiot0xfQMrO7brN3FM+GbZ6Xf6iMT/ExdvjWil65DUGtmAp6YrIKgzNV07xHFNO8eX0pPYa90w==}
+  '@mlightcad/cad-simple-viewer@1.0.22':
+    resolution: {integrity: sha512-K++uM72POpPKdU+ZWum0gGWxt5o731+hpLqQvL2iGjTc1ESq4gHtwX2wmtQtSFArtHjuYFrIazC+/l6QvVDvdw==}
     peerDependencies:
       '@mlightcad/data-model': 1.2.8
       '@mlightcad/mtext-renderer': 0.5.0
@@ -742,7 +742,7 @@ snapshots:
 
   '@lukeed/csprng@1.1.0': {}
 
-  '@mlightcad/cad-simple-viewer@1.0.21(@mlightcad/data-model@1.2.8)(@mlightcad/libredwg-web@0.2.1)(@mlightcad/mtext-renderer@0.5.0(three@0.172.0))(lodash-es@4.17.21)(three@0.172.0)':
+  '@mlightcad/cad-simple-viewer@1.0.22(@mlightcad/data-model@1.2.8)(@mlightcad/libredwg-web@0.2.1)(@mlightcad/mtext-renderer@0.5.0(three@0.172.0))(lodash-es@4.17.21)(three@0.172.0)':
     dependencies:
       '@mlightcad/data-model': 1.2.8
       '@mlightcad/libredwg-converter': 3.0.9(@mlightcad/data-model@1.2.8)(@mlightcad/libredwg-web@0.2.1)

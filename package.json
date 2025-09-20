@@ -22,7 +22,7 @@
     "vue-tsc": "^2.1.6"
   },
   "dependencies": {
-    "@mlightcad/cad-simple-viewer": "1.0.21",
+    "@mlightcad/cad-simple-viewer": "1.0.22",
     "@mlightcad/data-model": "1.2.8"
   }
 }

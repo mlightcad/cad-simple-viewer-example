@@ -61,7 +61,7 @@ class CadViewerApp {
         }
 
         DocCreator.instance.createExampleDoc2(doc.database)
-        docManager.setLayoutInfo()
+        docManager.setActiveLayout()
         docManager.curView.zoomTo(new AcGeBox2d(
           { x: 8200, y: 85000 },
           { x: 11600, y: 86600 }
