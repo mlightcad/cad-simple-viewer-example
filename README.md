@@ -55,6 +55,9 @@ registerWorkers()
 const canvas = document.getElementById('canvas') as HTMLCanvasElement
 AcApDocManager.createInstance(canvas)
 
+// Load default fonts
+await AcApDocManager.instance.loadDefaultFonts()
+
 // Read the file content
 const fileContent = await this.readFile(file)
 
