@@ -9,11 +9,11 @@ importers:
   .:
     dependencies:
       '@mlightcad/cad-simple-viewer':
-        specifier: 1.1.4
-        version: 1.1.4(@mlightcad/data-model@1.2.12)(@mlightcad/libredwg-web@0.2.1)(lodash-es@4.17.21)(three@0.172.0)
+        specifier: 1.1.5
+        version: 1.1.5(@mlightcad/data-model@1.2.15)(lodash-es@4.17.21)(three@0.172.0)
       '@mlightcad/data-model':
-        specifier: 1.2.12
-        version: 1.2.12
+        specifier: 1.2.15
+        version: 1.2.15
     devDependencies:
       '@mlightcad/common':
         specifier: 1.2.0
@@ -201,18 +201,18 @@ packages:
     resolution: {integrity: sha512-Z7C/xXCiGWsg0KuKsHTKJxbWhpI3Vs5GwLfOean7MGyVFGqdRgBbAjOCh6u4bbjPc/8MJ2pZmK/0DLdCbivLDA==}
     engines: {node: '>=8'}
 
-  '@mlightcad/cad-simple-viewer@1.1.4':
-    resolution: {integrity: sha512-24bPwjI05D29pWQ6peJ5vqtg304vNtKKFXFQeI2mAJoQpwZcupNFljwHB27mk/c5QThcAzJYNRkJVnIjlnwmtw==}
+  '@mlightcad/cad-simple-viewer@1.1.5':
+    resolution: {integrity: sha512-sfohUozX1lYMIb3032UWZSbaPUUkUJwXQztBpHkPZ5gD9pt6Aj4QBEu7hAhrZDBowMrS7drPjb7VezCrHUfQ1g==}
     peerDependencies:
-      '@mlightcad/data-model': 1.2.12
+      '@mlightcad/data-model': 1.2.15
       lodash-es: 4.17.21
       three: ^0.172.0
 
   '@mlightcad/common@1.2.0':
     resolution: {integrity: sha512-aWdCxSTxg/qyXZc/5g8qCzR1I0npqQ5CHSssn5B7dFqeVh8qPsoCgMn88RDkBT2+JlbDnhxZLKQO+NOWqHKidA==}
 
-  '@mlightcad/data-model@1.2.12':
-    resolution: {integrity: sha512-k7Ue3uIGxMPSdTasmDKVvtFgkbToqWAIDvnWy88aqY6zlhSu5hjzMUwQ5RzDjfgqnP/9QOYddVsz5LZBvX6ZFA==}
+  '@mlightcad/data-model@1.2.15':
+    resolution: {integrity: sha512-Oe+vL508eAQZVU5r5PdNcAA9Y52pEeQkUqWPKeowxKdtKiaRn/TWEnL9Vofb4vScJ2asrIOM4WP0cdhc2MsLvQ==}
 
   '@mlightcad/dxf-json@1.0.8':
     resolution: {integrity: sha512-NOLt3LcyOti+Ero9PMbvZaYWvn2IwVL7ysty0aYxTdeYc3gs1+Xnj+VjaCEL6ACMXLlmQd8pFQjMdRsuIIUd2A==}
@@ -227,14 +227,13 @@ packages:
     peerDependencies:
       '@mlightcad/geometry-engine': 3.0.1
 
-  '@mlightcad/libredwg-converter@3.0.12':
-    resolution: {integrity: sha512-LLh2rLUcVeTkotbqm8Q0cxXqbHPXHzA35P3RskjNvyGIHvozO5E69CmF1yXiiOyLSUVPTmv79rTssCxjElRlKQ==}
+  '@mlightcad/libredwg-converter@3.0.15':
+    resolution: {integrity: sha512-/P6+3Sd8rw8JZVP8c/pxi4fZ5WUoK8Tv1/GvH5iyLPpKZsdaP7DMtdt4NfdVDvUiAMi8b6u5VTGCNm7i6e8WEA==}
     peerDependencies:
-      '@mlightcad/data-model': 1.2.12
-      '@mlightcad/libredwg-web': 0.2.1
+      '@mlightcad/data-model': 1.2.15
 
-  '@mlightcad/libredwg-web@0.2.1':
-    resolution: {integrity: sha512-WDBArRp+x9MJJmzBuccoVQPQZhmPYFAwqnro8f+/ozAnGpovHpGgnJORCSRNe/FV46HDE7Vrxdl0P4yKOELppg==}
+  '@mlightcad/libredwg-web@0.2.2':
+    resolution: {integrity: sha512-zjBoq1C9qBYfllpja3+CMCITcJk+pfkI1D4L6URUIgST1d+/k4pWojAxSKDn1hqT3kpewgAuHoPEWdbWxDIZbQ==}
 
   '@rollup/rollup-android-arm-eabi@4.52.0':
     resolution: {integrity: sha512-VxDYCDqOaR7NXzAtvRx7G1u54d2kEHopb28YH/pKzY6y0qmogP3gG7CSiWsq9WvDFxOQMpNEyjVAHZFXfH3o/A==}
@@ -716,22 +715,20 @@ snapshots:
 
   '@lukeed/csprng@1.1.0': {}
 
-  '@mlightcad/cad-simple-viewer@1.1.4(@mlightcad/data-model@1.2.12)(@mlightcad/libredwg-web@0.2.1)(lodash-es@4.17.21)(three@0.172.0)':
+  '@mlightcad/cad-simple-viewer@1.1.5(@mlightcad/data-model@1.2.15)(lodash-es@4.17.21)(three@0.172.0)':
     dependencies:
-      '@mlightcad/data-model': 1.2.12
-      '@mlightcad/libredwg-converter': 3.0.12(@mlightcad/data-model@1.2.12)(@mlightcad/libredwg-web@0.2.1)
+      '@mlightcad/data-model': 1.2.15
+      '@mlightcad/libredwg-converter': 3.0.15(@mlightcad/data-model@1.2.15)
       lodash-es: 4.17.21
       mitt: 3.0.1
       rbush: 4.0.1
       three: 0.172.0
-    transitivePeerDependencies:
-      - '@mlightcad/libredwg-web'
 
   '@mlightcad/common@1.2.0':
     dependencies:
       loglevel: 1.9.2
 
-  '@mlightcad/data-model@1.2.12':
+  '@mlightcad/data-model@1.2.15':
     dependencies:
       '@mlightcad/dxf-json': 1.0.8
       uid: 2.0.2
@@ -749,12 +746,12 @@ snapshots:
     dependencies:
       '@mlightcad/geometry-engine': 3.0.1(@mlightcad/common@1.2.0)
 
-  '@mlightcad/libredwg-converter@3.0.12(@mlightcad/data-model@1.2.12)(@mlightcad/libredwg-web@0.2.1)':
+  '@mlightcad/libredwg-converter@3.0.15(@mlightcad/data-model@1.2.15)':
     dependencies:
-      '@mlightcad/data-model': 1.2.12
-      '@mlightcad/libredwg-web': 0.2.1
+      '@mlightcad/data-model': 1.2.15
+      '@mlightcad/libredwg-web': 0.2.2
 
-  '@mlightcad/libredwg-web@0.2.1': {}
+  '@mlightcad/libredwg-web@0.2.2': {}
 
   '@rollup/rollup-android-arm-eabi@4.52.0':
     optional: true
