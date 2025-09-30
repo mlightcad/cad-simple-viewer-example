@@ -46,6 +46,16 @@ class CadViewerApp {
     })
   }
 
+  private hideNewButton() {
+    // Hide the new drawing button after creating the drawing
+    this.newDrawingButton.style.display = 'none'
+    // Also hide the associated label
+    const newButtonLabel = this.newDrawingButton.parentElement?.querySelector('.file-fab-label')
+    if (newButtonLabel) {
+      (newButtonLabel as HTMLElement).style.display = 'none'
+    }
+  }
+
   private setupNewDrawingHandling() {
     // New drawing button click event
     this.newDrawingButton.addEventListener('click', () => {
@@ -69,13 +79,7 @@ class CadViewerApp {
           { x: 11600, y: 86600 }
         ))
         
-        // Hide the new drawing button after creating the drawing
-        this.newDrawingButton.style.display = 'none'
-        // Also hide the associated label
-        const newButtonLabel = this.newDrawingButton.parentElement?.querySelector('.file-fab-label')
-        if (newButtonLabel) {
-          (newButtonLabel as HTMLElement).style.display = 'none'
-        }
+        this.hideNewButton()
       }
     })
   }
@@ -93,6 +97,7 @@ class CadViewerApp {
       return
     }
 
+    this.hideNewButton()
     this.showLoading(true)
     this.clearMessages()
 

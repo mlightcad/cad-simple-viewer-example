@@ -118,7 +118,8 @@ export class DocCreator {
    * ```
    */
   createExampleDoc2(db: AcDbDatabase) {
-    this.createLayoutForModelSpace(db)
+    // Create default layer, line type, dimension type, text style and layout.
+    db.createDefaultData()
     const modelSpace = db.tables.blockTable.modelSpace
     modelSpace.appendEntity(this.createArc())
     const lines = this.createLines()
