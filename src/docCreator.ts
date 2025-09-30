@@ -3,7 +3,6 @@ import {
   AcDbArc,
   AcDbDatabase,
   AcDbHatch,
-  AcDbLayout,
   AcDbLine,
   AcDbMText,
   AcDbTextStyleTableRecord,
@@ -81,7 +80,8 @@ export class DocCreator {
   createExampleDoc1(db: AcDbDatabase) {
     const rowCount = 2
     const colCount = 2
-    this.createLayoutForModelSpace(db)
+    // Create default layer, line type, dimension type, text style and layout.
+    db.createDefaultData()
     for (let i = 0; i < rowCount; ++i) {
       for (let j = 0; j < colCount; ++j) {
         const hatch = new AcDbHatch()
@@ -132,20 +132,6 @@ export class DocCreator {
 
     db.tables.textStyleTable.add(this.createTextStyle())
     modelSpace.appendEntity(this.createMText())
-  }
-
-  private createLayoutForModelSpace(database: AcDbDatabase) {
-    const layout = new AcDbLayout()
-    layout.layoutName = 'Model'
-    layout.tabOrder = 0
-    layout.blockTableRecordId = database.tables.blockTable.modelSpace.objectId
-    layout.limits.min.copy({ x: 0, y: 0 })
-    layout.limits.max.copy({ x: 1000000, y: 1000000 })
-    layout.extents.min.copy({ x: 0, y: 0, z: 0 })
-    layout.extents.max.copy({ x: 1000000, y: 1000000, z: 0 })
-    database.dictionaries.layouts.setAt(layout.layoutName, layout)
-    database.tables.blockTable.modelSpace.layoutId = layout.objectId
-    return layout
   }
 
   private createTextStyle() {

@@ -1,5 +1,5 @@
 import { AcApDocManager, registerWorkers } from '@mlightcad/cad-simple-viewer'
-import { AcDbOpenDatabaseOptions, AcGeBox2d } from '@mlightcad/data-model'
+import { AcDbOpenDatabaseOptions } from '@mlightcad/data-model'
 import { DocCreator } from './docCreator'
 
 class CadViewerApp {
@@ -74,11 +74,8 @@ class CadViewerApp {
 
         DocCreator.instance.createExampleDoc2(doc.database)
         docManager.setActiveLayout()
-        docManager.curView.zoomTo(new AcGeBox2d(
-          { x: 8200, y: 85000 },
-          { x: 11600, y: 86600 }
-        ))
-        
+        docManager.curView.zoomToFit()
+
         this.hideNewButton()
       }
     })
