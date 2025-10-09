@@ -2,7 +2,7 @@
 
 This is an example application that demonstrates how to use the `@mlightcad/cad-simple-viewer` package to display DXF and DWG files in a web browser.
 
-[**🌐 Live Demo**](https://mlight-lee.github.io/cad-simple-viewer-example/)
+[**🌐 Live Demo**](https://mlightcad.gitlab.io/cad-simple-viewer-example/)
 
 ## Features
 

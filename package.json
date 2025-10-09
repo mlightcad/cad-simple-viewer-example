@@ -5,7 +5,7 @@
   "type": "module",
   "repository": {
     "type": "git",
-    "url": "git://github.com/mlight-lee/cad-simple-viewer-example"
+    "url": "https://gitlab.com/mlightcad/cad-simple-viewer-example"
   },
   "scripts": {
     "build": "vue-tsc && vite build",
@@ -22,7 +22,7 @@
     "vue-tsc": "^2.1.6"
   },
   "dependencies": {
-    "@mlightcad/cad-simple-viewer": "1.1.8",
-    "@mlightcad/data-model": "1.2.20"
+    "@mlightcad/cad-simple-viewer": "1.1.10",
+    "@mlightcad/data-model": "1.2.23"
   }
 }
