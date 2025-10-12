@@ -61,6 +61,8 @@ deploy:
 # ----------------------
 pages:
   stage: pages
+  variables:
+    GIT_STRATEGY: none
   script:
     - echo "Deploying to GitLab Pages..."
   artifacts:
