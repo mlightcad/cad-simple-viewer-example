@@ -134,19 +134,12 @@ class CadViewerApp {
     }
   }
 
-  private readFile(file: File): Promise<string | ArrayBuffer> {
+  private readFile(file: File): Promise<ArrayBuffer> {
     return new Promise((resolve, reject) => {
       const reader = new FileReader()
-      reader.onload = () => resolve(reader.result as string | ArrayBuffer)
+      reader.onload = () => resolve(reader.result as ArrayBuffer)
       reader.onerror = () => reject(reader.error)
-      const fileName = file.name.toLowerCase()
-      if (fileName.endsWith('.dxf')) {
-        reader.readAsText(file)
-      } else if (fileName.endsWith('.dwg')) {
-        reader.readAsArrayBuffer(file)
-      } else {
-        reject(new Error('Unsupported file type'))
-      }
+      reader.readAsArrayBuffer(file)
     })
   }
 
