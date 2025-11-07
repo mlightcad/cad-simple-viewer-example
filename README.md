@@ -2,7 +2,7 @@
 
 This is an example application that demonstrates how to use the `@mlightcad/cad-simple-viewer` package to display DXF and DWG files in a web browser.
 
-[**🌐 Live Demo**](https://mlightcad.gitlab.io/cad-simple-viewer-example/)
+[**🌐 Live Demo**](https://mlightcad.github.io/cad-simple-viewer-example/)
 
 ## Features
 
@@ -134,7 +134,7 @@ When you modify entities, you're working directly with the underlying drawing da
 
 This capability makes `cad-simple-viewer` suitable for applications that need to not only display CAD files but also allow users to interact with and modify the drawing content.
 
-**Important Note**: The usage patterns in `cad-simple-viewer` are **very similar to AutoCAD RealDWG**. If you're familiar with AutoCAD RealDWG development, you'll find the API structure and workflow nearly identical. The main difference is that we use the [**realdwg-web API**](https://mlight-lee.github.io/realdwg-web/) instead of the native RealDWG libraries.
+**Important Note**: The usage patterns in `cad-simple-viewer` are **very similar to AutoCAD RealDWG**. If you're familiar with AutoCAD RealDWG development, you'll find the API structure and workflow nearly identical. The main difference is that we use the [**realdwg-web API**](https://mlightcad.github.io/realdwg-web/) instead of the native RealDWG libraries.
 
 #### Example: Adding Entities
 
