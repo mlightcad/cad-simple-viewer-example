@@ -1,4 +1,4 @@
-import { AcApDocManager, registerWorkers } from '@mlightcad/cad-simple-viewer'
+import { AcApDocManager } from '@mlightcad/cad-simple-viewer'
 import { AcDbOpenDatabaseOptions } from '@mlightcad/data-model'
 import { DocCreator } from './docCreator'
 
@@ -6,7 +6,7 @@ class CadViewerApp {
   private canvas: HTMLCanvasElement
   private fileInput: HTMLInputElement
   private newDrawingButton: HTMLButtonElement
-  private loadingElement: HTMLElement
+  private isInitialized: boolean = false
 
   constructor() {
     // Get DOM elements
@@ -15,28 +15,26 @@ class CadViewerApp {
       'fileInputElement'
     ) as HTMLInputElement
     this.newDrawingButton = document.getElementById('newDrawingButton') as HTMLButtonElement
-    this.loadingElement = document.getElementById('loading') as HTMLElement
 
-    registerWorkers()
-    this.initializeViewer()
     this.setupFileHandling()
     this.setupNewDrawingHandling()
   }
 
-  private async initializeViewer() {
-    try {
-      // Initialize the document manager with the canvas and baseUrl.
-      // Actually 'baseUrl' here isn't required. Override default 'baseUrl'
-      // value is just for demostration.
-      AcApDocManager.createInstance({
-        canvas: this.canvas,
-        baseUrl: 'https://cdn.jsdelivr.net/gh/mlightcad/cad-data@main/'
-      })
-      // Load default fonts
-      await AcApDocManager.instance.loadDefaultFonts()
-    } catch (error) {
-      console.error('Failed to initialize CAD viewer:', error)
-      this.showMessage('Failed to initialize CAD viewer', 'error')
+  private initialize() {
+    if (!this.isInitialized) {
+      try {
+        // Initialize the document manager with the canvas and baseUrl.
+        // Actually 'baseUrl' here isn't required. Override default 'baseUrl'
+        // value is just for demostration.
+        AcApDocManager.createInstance({
+          canvas: this.canvas,
+          baseUrl: 'https://cdn.jsdelivr.net/gh/mlightcad/cad-data@main/'
+        })
+        this.isInitialized = true
+      } catch (error) {
+        console.error('Failed to initialize CAD viewer:', error)
+        this.showMessage('Failed to initialize CAD viewer', 'error')
+      }
     }
   }
 
@@ -64,6 +62,7 @@ class CadViewerApp {
   private setupNewDrawingHandling() {
     // New drawing button click event
     this.newDrawingButton.addEventListener('click', () => {
+      this.initialize()
       const docManager = AcApDocManager.instance
       if (!docManager) {
         this.showMessage('CAD viewer not initialized', 'error')
@@ -87,10 +86,7 @@ class CadViewerApp {
   }
 
   private async loadFile(file: File) {
-    if (!AcApDocManager.instance) {
-      this.showMessage('CAD viewer not initialized', 'error')
-      return
-    }
+    this.initialize()
 
     // Validate file type
     const fileName = file.name.toLowerCase()
@@ -100,7 +96,6 @@ class CadViewerApp {
     }
 
     this.hideNewButton()
-    this.showLoading(true)
     this.clearMessages()
 
     try {
@@ -134,8 +129,6 @@ class CadViewerApp {
     } catch (error) {
       console.error('Error loading file:', error)
       this.showMessage(`Error loading file: ${error}`, 'error')
-    } finally {
-      this.showLoading(false)
     }
   }
 
@@ -146,10 +139,6 @@ class CadViewerApp {
       reader.onerror = () => reject(reader.error)
       reader.readAsArrayBuffer(file)
     })
-  }
-
-  private showLoading(show: boolean) {
-    this.loadingElement.style.display = show ? 'block' : 'none'
   }
 
   private showMessage(

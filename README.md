@@ -48,15 +48,9 @@ Thirdly, add the following code in the entry point of cad-simple-viewer integrat
 import { AcApDocManager } from '@mlightcad/cad-simple-viewer'
 import { AcDbDatabaseConverterManager, AcDbFileType, registerWorkers } from '@mlightcad/data-model'
 
-// Initializes background workers used by the viewer runtime.
-registerWorkers()
-
 // Get canvas DOM element by its id
 const canvas = document.getElementById('canvas') as HTMLCanvasElement
 AcApDocManager.createInstance(canvas)
-
-// Load default fonts
-await AcApDocManager.instance.loadDefaultFonts()
 
 // Read the file content
 const fileContent = await this.readFile(file)
