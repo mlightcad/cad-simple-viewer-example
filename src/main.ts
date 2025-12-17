@@ -1,6 +1,8 @@
-import { AcApDocManager } from '@mlightcad/cad-simple-viewer'
+import { AcApDocManager, AcEdCommandStack } from '@mlightcad/cad-simple-viewer'
 import { AcDbOpenDatabaseOptions } from '@mlightcad/data-model'
 import { DocCreator } from './docCreator'
+import { AcApEllipseCmd } from './ellipseCmd'
+import { initializeLocale } from './i8n'
 
 class CadViewerApp {
   private canvas: HTMLCanvasElement
@@ -30,12 +32,24 @@ class CadViewerApp {
           canvas: this.canvas,
           baseUrl: 'https://cdn.jsdelivr.net/gh/mlightcad/cad-data@main/'
         })
+        initializeLocale()
+        this.registerCommands()
         this.isInitialized = true
       } catch (error) {
         console.error('Failed to initialize CAD viewer:', error)
         this.showMessage('Failed to initialize CAD viewer', 'error')
       }
     }
+  }
+
+  private registerCommands() {
+    const register = AcEdCommandStack.instance
+    register.addCommand(
+      AcEdCommandStack.SYSTEMT_COMMAND_GROUP_NAME,
+      'ellipse',
+      'ellipse',
+      new AcApEllipseCmd()
+    )
   }
 
   private setupFileHandling() {
@@ -78,7 +92,7 @@ class CadViewerApp {
 
         DocCreator.instance.createExampleDoc2(doc.database)
         docManager.setActiveLayout()
-        docManager.curView.zoomToFit()
+        docManager.curView.zoomToFitDrawing()
 
         this.hideNewButton()
       }

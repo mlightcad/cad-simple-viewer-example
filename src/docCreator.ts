@@ -5,7 +5,6 @@ import {
   AcDbHatch,
   AcDbLine,
   AcDbMText,
-  AcDbTextStyleTableRecord,
   AcGeCircArc2d,
   AcGeLine2d,
   AcGeLine3d,
@@ -13,11 +12,8 @@ import {
   AcGeMathUtil,
   AcGePoint3d,
   AcGePolyline2d,
-  AcGiMTextAttachmentPoint,
-  AcGiTextStyle
+  AcGiMTextAttachmentPoint
 } from '@mlightcad/data-model'
-
-const DEFAULT_FONT = 'simsun'
 
 /**
  * Factory class for creating example CAD documents with predefined content.
@@ -129,32 +125,15 @@ export class DocCreator {
       )
     })
     modelSpace.appendEntity(this.createHatch())
-
-    db.tables.textStyleTable.add(this.createTextStyle())
     modelSpace.appendEntity(this.createMText())
   }
 
-  private createTextStyle() {
-    const textStyle: AcGiTextStyle = {
-      bigFont: '',
-      color: 0xffffff,
-      extendedFont: DEFAULT_FONT,
-      fixedTextHeight: 0,
-      font: DEFAULT_FONT,
-      lastHeight: 0.2,
-      name: 'Standard',
-      obliqueAngle: 0,
-      standardFlag: 0,
-      textGenerationFlag: 0,
-      widthFactor: 0.667
-    }
-    return new AcDbTextStyleTableRecord(textStyle)
-  }
-
   private createMText() {
+    const color = new AcCmColor()
+    color.colorName = 'red'
     const mtext = new AcDbMText()
     mtext.attachmentPoint = AcGiMTextAttachmentPoint.MiddleLeft
-    mtext.color = new AcCmColor().setColorName('red')
+    mtext.color = color
     mtext.layer = '0'
     mtext.location = new AcGePoint3d(9850, 86773, 0)
     mtext.contents = '{\\W0.667;\\T1.1;智慧8081}'

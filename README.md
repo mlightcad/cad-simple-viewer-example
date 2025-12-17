@@ -132,12 +132,6 @@ This capability makes `cad-simple-viewer` suitable for applications that need to
 
 #### Example: Adding Entities
 
-If you want to create, modify, or delete entities in the drawing, please add the following dependencies into your `package.json` as `devDependencies` so that types needed can be found.
-
-- @mlightcad/common
-- @mlightcad/geometry-engine
-- @mlightcad/graphic-interface
-
 The following code demonstrates how to add entities, following the same pattern you'd use in AutoCAD RealDWG:
 
 ```typescript
@@ -176,6 +170,14 @@ modelSpace.appendEntity(text)
 ```
 
 Please refer to class [DocCreator](./src/docCreator.ts) to get one full example to create one new drawing.
+
+
+#### Example: Custom Command
+
+Commands are the primary way users interact with the CAD-Viewer. Each command represents a specific operation, such as drawing a line, creating a circle, zooming, or selecting objects. CAD-Viewer supports creating custom commands to extend functionalities of CAD-Viewer.
+
+- [Wiki Page](https://github.com/mlightcad/cad-viewer/wiki/Command): Introduce how to create one custom command.
+- [Example Code](./src/ellipseCmd.ts): One demo command to create one ellipse by center, major axis, and minor radius.
 
 ## License
 
