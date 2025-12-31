@@ -5,17 +5,15 @@ import { AcApEllipseCmd } from './ellipseCmd'
 import { initializeLocale } from './i8n'
 
 class CadViewerApp {
-  private canvas: HTMLCanvasElement
+  private container: HTMLDivElement
   private fileInput: HTMLInputElement
   private newDrawingButton: HTMLButtonElement
   private isInitialized: boolean = false
 
   constructor() {
     // Get DOM elements
-    this.canvas = document.getElementById('canvas') as HTMLCanvasElement
-    this.fileInput = document.getElementById(
-      'fileInputElement'
-    ) as HTMLInputElement
+    this.container = document.getElementById('cad-container') as HTMLDivElement
+    this.fileInput = document.getElementById('fileInputElement') as HTMLInputElement
     this.newDrawingButton = document.getElementById('newDrawingButton') as HTMLButtonElement
 
     this.setupFileHandling()
@@ -29,7 +27,8 @@ class CadViewerApp {
         // Actually 'baseUrl' here isn't required. Override default 'baseUrl'
         // value is just for demostration.
         AcApDocManager.createInstance({
-          canvas: this.canvas,
+          container: this.container,
+          autoResize: true,
           baseUrl: 'https://cdn.jsdelivr.net/gh/mlightcad/cad-data@main/'
         })
         initializeLocale()
