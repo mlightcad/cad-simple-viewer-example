@@ -8,7 +8,9 @@ export default {
   },
   command: {
     ACAD: {
-      ellipse: '通过中心点、长轴半径和短轴半径创建一个椭圆',
+      ellipse: {
+        description: '通过中心点、长轴半径和短轴半径创建一个椭圆'
+      }
     }
   }
 }

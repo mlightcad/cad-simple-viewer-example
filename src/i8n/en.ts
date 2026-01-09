@@ -8,7 +8,9 @@ export default {
   },
   command: {
     ACAD: {
-      ellipse: 'Creates one ellipse by center, major axis, and minor radius',
+      ellipse: {
+        description: 'Creates one ellipse by center, major axis, and minor radius'
+      }
     }
   }
 }

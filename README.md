@@ -34,11 +34,11 @@ Firstly, add the following dependencies into your `package.json`.
 - @mlightcad/cad-simple-viewer
 - @mlightcad/data-model
 
-Secondly, add one canvas element in your html.
+Secondly, add one contain element for cad-simple-viewer.
 
 ```html
 <body>
-  <canvas id="canvas"></canvas>
+  <div id="cad-container"></div>
 </body>
 ```
 

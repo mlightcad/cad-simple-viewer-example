@@ -42,7 +42,7 @@ class CadViewerApp {
   }
 
   private registerCommands() {
-    const register = AcEdCommandStack.instance
+    const register = AcApDocManager.instance.commandManager
     register.addCommand(
       AcEdCommandStack.SYSTEMT_COMMAND_GROUP_NAME,
       'ellipse',
