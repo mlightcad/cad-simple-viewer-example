@@ -1,4 +1,4 @@
-import { AcApContext, AcApDocManager, AcApI18n, AcEdBaseView, AcEdCommand, AcEdPreviewJig, AcEdPromptDistanceOptions, AcEdPromptPointOptions } from '@mlightcad/cad-simple-viewer'
+import { AcApContext, AcApDocManager, AcApI18n, AcEdBaseView, AcEdCommand, AcEdPreviewJig, AcEdPromptDistanceOptions, AcEdPromptPointOptions, AcEdPromptStatus } from '@mlightcad/cad-simple-viewer'
 import { AcDbEllipse, AcGePoint3d, AcGePoint3dLike, AcGeVector3d } from '@mlightcad/data-model'
 
 
@@ -43,18 +43,28 @@ export class AcApEllipseJig extends AcEdPreviewJig<number> {
  */
 export class AcApEllipseCmd extends AcEdCommand {
   async execute(context: AcApContext) {
+    const editor = AcApDocManager.instance.editor
+
     const centerPrompt = new AcEdPromptPointOptions(
       AcApI18n.t('jig.ellipse.center')
     )
-    const center = await AcApDocManager.instance.editor.getPoint(centerPrompt)
+    const centerResult = await editor.getPoint(centerPrompt)
+    if (centerResult.status !== AcEdPromptStatus.OK || !centerResult.value) {
+      return
+    }
+    const center = centerResult.value
 
     const majorAxisEndPointPrompt = new AcEdPromptPointOptions(
       AcApI18n.t('jig.ellipse.majorRadius')
     )
     majorAxisEndPointPrompt.useDashedLine = true
     majorAxisEndPointPrompt.useBasePoint = true
-    const majorAxisEndPoint =
-      await AcApDocManager.instance.editor.getPoint(majorAxisEndPointPrompt)
+    majorAxisEndPointPrompt.basePoint = new AcGePoint3d(center)
+    const majorAxisEndPointResult = await editor.getPoint(majorAxisEndPointPrompt)
+    if (majorAxisEndPointResult.status !== AcEdPromptStatus.OK || !majorAxisEndPointResult.value) {
+      return
+    }
+    const majorAxisEndPoint = majorAxisEndPointResult.value
 
     const minorRadiusPrompt = new AcEdPromptDistanceOptions(
       AcApI18n.t('jig.ellipse.minorRadius')
@@ -62,8 +72,11 @@ export class AcApEllipseCmd extends AcEdCommand {
     minorRadiusPrompt.useDashedLine = false
     minorRadiusPrompt.basePoint = new AcGePoint3d(center)
     minorRadiusPrompt.jig = new AcApEllipseJig(context.view, center, majorAxisEndPoint)
-    const minorRadius =
-      await AcApDocManager.instance.editor.getDistance(minorRadiusPrompt)
+    const minorRadiusResult = await editor.getDistance(minorRadiusPrompt)
+    if (minorRadiusResult.status !== AcEdPromptStatus.OK || minorRadiusResult.value === undefined) {
+      return
+    }
+    const minorRadius = minorRadiusResult.value
 
     const db = context.doc.database
     const majorAxis = new AcGeVector3d(
