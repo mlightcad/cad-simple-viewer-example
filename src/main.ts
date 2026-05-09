@@ -45,8 +45,8 @@ class CadViewerApp {
     const register = AcApDocManager.instance.commandManager
     register.addCommand(
       AcEdCommandStack.SYSTEMT_COMMAND_GROUP_NAME,
-      'ellipse',
-      'ellipse',
+      'ellipsedemo',
+      'ellipsedemo',
       new AcApEllipseCmd()
     )
   }
