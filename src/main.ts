@@ -29,7 +29,13 @@ class CadViewerApp {
         AcApDocManager.createInstance({
           container: this.container,
           autoResize: true,
-          baseUrl: 'https://cdn.jsdelivr.net/gh/mlightcad/cad-data@main/'
+          baseUrl: 'https://cdn.jsdelivr.net/gh/mlightcad/cad-data@main/',
+          webworkerFileUrls: {
+            mtextRender: './assets/mtext-renderer-worker.js',
+            dxfParser: './assets/dxf-parser-worker.js',
+            dwgParser: './assets/libredwg-parser-worker.js'
+          },
+          htmlViewerRuntimeUrl: './assets/viewer-runtime.iife.js'
         })
         initializeLocale()
         this.registerCommands()

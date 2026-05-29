@@ -24,6 +24,10 @@ export default defineConfig(() => {
           {
             src: './node_modules/@mlightcad/cad-simple-viewer/dist/*-worker.js',
             dest: 'assets'
+          },
+          {
+            src: './node_modules/@mlightcad/cad-simple-viewer/dist/viewer-runtime.iife.js',
+            dest: 'assets'
           }
         ]
       })

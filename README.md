@@ -8,6 +8,7 @@ This is an example application that demonstrates how to use the `@mlightcad/cad-
 
 - 📁 Open one DWG/DXF file
 - ✏️ Create one drawing
+- 📄 Export the current drawing as a self-contained HTML file (`chtml` command)
 
 ## Development
 
@@ -42,18 +43,27 @@ Secondly, add one contain element for cad-simple-viewer.
 </body>
 ```
 
-Thirdly, add the following code in the entry point of cad-simple-viewer integration page.
+Thirdly, initialize the viewer in your entry point:
 
 ```typescript
 import { AcApDocManager } from '@mlightcad/cad-simple-viewer'
-import { AcDbDatabaseConverterManager, AcDbFileType, registerWorkers } from '@mlightcad/data-model'
+import { AcDbOpenDatabaseOptions } from '@mlightcad/data-model'
 
-// Get canvas DOM element by its id
-const canvas = document.getElementById('canvas') as HTMLCanvasElement
-AcApDocManager.createInstance(canvas)
+const container = document.getElementById('cad-container') as HTMLDivElement
+
+AcApDocManager.createInstance({
+  container,
+  autoResize: true,
+  webworkerFileUrls: {
+    mtextRender: './assets/mtext-renderer-worker.js',
+    dxfParser: './assets/dxf-parser-worker.js',
+    dwgParser: './assets/libredwg-parser-worker.js'
+  },
+  htmlViewerRuntimeUrl: './assets/viewer-runtime.iife.js'
+})
 
 // Read the file content
-const fileContent = await this.readFile(file)
+const fileContent = await readFile(file)
 
 // Set database options
 const options: AcDbOpenDatabaseOptions = {
@@ -69,16 +79,16 @@ const success = await AcApDocManager.instance.openDocument(
 )
 
 // Your application logic here...
-......
 ```
 
-Finally, copy web worker javascript files to `dist/assets` folder.
+Finally, copy static assets to the `dist/assets` folder.
 
-Web worker are used to parser dxf/dwg file and render mtext entities so that UI not blocked. You can copy the following web worker files to folder `dist/assets` manually.
+Web workers are used to parse DXF/DWG files and render MTEXT entities so the UI is not blocked. The HTML viewer runtime is required when exporting drawings to standalone HTML files. You can copy the following files to `dist/assets` manually:
 
 - `./node_modules/@mlightcad/data-model/dist/dxf-parser-worker.js`
 - `./node_modules/@mlightcad/cad-simple-viewer/dist/libredwg-parser-worker.js`
 - `./node_modules/@mlightcad/cad-simple-viewer/dist/mtext-renderer-worker.js`
+- `./node_modules/@mlightcad/cad-simple-viewer/dist/viewer-runtime.iife.js`
 
 However, `vite-plugin-static-copy` is recommended to make your life easier.
 
@@ -109,6 +119,10 @@ export default defineConfig(() => {
           {
             src: './node_modules/@mlightcad/cad-simple-viewer/dist/*-worker.js',
             dest: 'assets'
+          },
+          {
+            src: './node_modules/@mlightcad/cad-simple-viewer/dist/viewer-runtime.iife.js',
+            dest: 'assets'
           }
         ]
       })
@@ -116,6 +130,21 @@ export default defineConfig(() => {
   }
 })
 ```
+
+### Export to HTML
+
+`cad-simple-viewer` includes a built-in `chtml` command that exports the active drawing as a **self-contained HTML file**. The snapshot and viewer runtime are inlined into a single file, so the result can be opened directly in a browser (including via `file://`).
+
+Trigger the export after a document is loaded:
+
+```typescript
+AcApDocManager.instance.sendStringToExecute('chtml')
+```
+
+For export to work, two things are required:
+
+1. **Serve `viewer-runtime.iife.js`** — copy it to your static assets (see `vite.config.ts` above) and set `htmlViewerRuntimeUrl` when creating `AcApDocManager`. At export time the runtime is fetched and embedded into the HTML. If this file is missing, the dev server may return `index.html` instead, and the exported file will fail to open with `Unexpected token '<'`.
+2. **Match URLs** — `htmlViewerRuntimeUrl` must point to the same path where the runtime file is served (for example `./assets/viewer-runtime.iife.js`).
 
 ### Beyond a Viewer
 
