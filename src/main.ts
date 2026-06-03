@@ -1,4 +1,7 @@
+import { registerLazyHtmlPlugin } from '@mlightcad/cad-html-plugin'
+import { registerLazyPdfPlugin } from '@mlightcad/cad-pdf-plugin'
 import { AcApDocManager, AcEdCommandStack } from '@mlightcad/cad-simple-viewer'
+import { registerLazySvgPlugin } from '@mlightcad/cad-svg-plugin'
 import { AcDbOpenDatabaseOptions } from '@mlightcad/data-model'
 import { DocCreator } from './docCreator'
 import { AcApEllipseCmd } from './ellipseCmd'
@@ -39,6 +42,7 @@ class CadViewerApp {
         })
         initializeLocale()
         this.registerCommands()
+        this.registerLazyPlugins()
         this.isInitialized = true
       } catch (error) {
         console.error('Failed to initialize CAD viewer:', error)
@@ -55,6 +59,21 @@ class CadViewerApp {
       'ellipsedemo',
       new AcApEllipseCmd()
     )
+  }
+
+  /**
+   * Registers lazy plugins that load on first use of their trigger commands.
+   *
+   * Currently registers the PDF plugin (`cpdf`, `ipdf`), the HTML export
+   * plugin (`chtml`), and the SVG export plugin (`csvg`), which are fetched
+   * only when one of those commands runs.
+   * Safe to call multiple times; registration runs once per application lifetime.
+   */
+  private registerLazyPlugins() {
+    const pluginManager = AcApDocManager.instance.pluginManager
+    registerLazyHtmlPlugin(pluginManager)
+    registerLazyPdfPlugin(pluginManager)
+    registerLazySvgPlugin(pluginManager)
   }
 
   private setupFileHandling() {
