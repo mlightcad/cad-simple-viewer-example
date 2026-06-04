@@ -26,7 +26,7 @@ export default defineConfig(() => {
             dest: 'assets'
           },
           {
-            src: './node_modules/@mlightcad/cad-simple-viewer/dist/viewer-runtime.iife.js',
+            src: './node_modules/@mlightcad/cad-html-plugin/dist/viewer-runtime.iife.js',
             dest: 'assets'
           }
         ]

@@ -8,12 +8,21 @@ importers:
 
   .:
     dependencies:
+      '@mlightcad/cad-html-plugin':
+        specifier: 1.5.3
+        version: 1.5.3(@mlightcad/cad-simple-viewer@1.5.3(@mlightcad/data-model@1.8.1)(lodash-es@4.17.21)(three@0.172.0))(@mlightcad/data-model@1.8.1)(@mlightcad/three-renderer@1.5.3(@mlightcad/data-model@1.8.1)(@mlightcad/mtext-renderer@0.10.16(three@0.172.0))(@velipso/polybool@1.1.1)(three@0.172.0))(three@0.172.0)
+      '@mlightcad/cad-pdf-plugin':
+        specifier: 1.5.3
+        version: 1.5.3(@mlightcad/cad-simple-viewer@1.5.3(@mlightcad/data-model@1.8.1)(lodash-es@4.17.21)(three@0.172.0))(@mlightcad/cad-svg-plugin@1.5.3(@mlightcad/cad-simple-viewer@1.5.3(@mlightcad/data-model@1.8.1)(lodash-es@4.17.21)(three@0.172.0))(@mlightcad/data-model@1.8.1)(@mlightcad/mtext-parser@1.4.1))(@mlightcad/data-model@1.8.1)
       '@mlightcad/cad-simple-viewer':
-        specifier: 1.5.1
-        version: 1.5.1(@mlightcad/cad-html-exporter@1.5.1(@mlightcad/data-model@1.7.40)(@mlightcad/three-renderer@1.5.1(@mlightcad/data-model@1.7.40)(@mlightcad/mtext-renderer@0.10.15(three@0.172.0))(@velipso/polybool@1.1.1)(three@0.172.0))(three@0.172.0))(@mlightcad/data-model@1.7.40)(@mlightcad/mtext-renderer@0.10.15(three@0.172.0))(lodash-es@4.17.21)(three@0.172.0)
+        specifier: 1.5.3
+        version: 1.5.3(@mlightcad/data-model@1.8.1)(lodash-es@4.17.21)(three@0.172.0)
+      '@mlightcad/cad-svg-plugin':
+        specifier: 1.5.3
+        version: 1.5.3(@mlightcad/cad-simple-viewer@1.5.3(@mlightcad/data-model@1.8.1)(lodash-es@4.17.21)(three@0.172.0))(@mlightcad/data-model@1.8.1)(@mlightcad/mtext-parser@1.4.1)
       '@mlightcad/data-model':
-        specifier: 1.7.40
-        version: 1.7.40
+        specifier: 1.8.1
+        version: 1.8.1
     devDependencies:
       typescript:
         specifier: ^5.5.2
@@ -24,28 +33,8 @@ importers:
       vite-plugin-static-copy:
         specifier: ^3.1.1
         version: 3.1.2(vite@5.4.20)
-      vue-tsc:
-        specifier: ^2.1.6
-        version: 2.2.12(typescript@5.9.2)
 
 packages:
-
-  '@babel/helper-string-parser@7.27.1':
-    resolution: {integrity: sha512-qMlSxKbpRlAridDExk92nSobyDdpPijUq2DW6oDnUqd0iOGxmQjyqhMIihI9+zv4LPyZdRje2cavWPbCbWm3eA==}
-    engines: {node: '>=6.9.0'}
-
-  '@babel/helper-validator-identifier@7.27.1':
-    resolution: {integrity: sha512-D2hP9eA+Sqx1kBZgzxZh0y1trbuU+JoDkiEwqhQ36nodYqJwyEIhPSdMNd7lOm/4io72luTPWH20Yda0xOuUow==}
-    engines: {node: '>=6.9.0'}
-
-  '@babel/parser@7.28.4':
-    resolution: {integrity: sha512-yZbBqeM6TkpP9du/I2pUZnJsRMGGvOuIrhjzC1AwHwW+6he4mni6Bp/m8ijn0iOuZuPI2BfkCoSRunpyjnrQKg==}
-    engines: {node: '>=6.0.0'}
-    hasBin: true
-
-  '@babel/types@7.28.4':
-    resolution: {integrity: sha512-bkFqkLhh3pMBUQQkpVgWDWq/lqzc2678eUyDlTBhRqhCHFguYYGM0Efga7tYk4TogG/3x0EEl66/OQ+WGbWB/Q==}
-    engines: {node: '>=6.9.0'}
 
   '@esbuild/aix-ppc64@0.21.5':
     resolution: {integrity: sha512-1SDgH6ZSPTlggy1yI6+Dbkiz8xzpHJEVAlF/AM1tHPLsf5STom9rwtjE4hKAF20FfXXNTFqEYXyJNWh1GiZedQ==}
@@ -192,66 +181,71 @@ packages:
     resolution: {integrity: sha512-Z7C/xXCiGWsg0KuKsHTKJxbWhpI3Vs5GwLfOean7MGyVFGqdRgBbAjOCh6u4bbjPc/8MJ2pZmK/0DLdCbivLDA==}
     engines: {node: '>=8'}
 
-  '@mlightcad/cad-html-exporter@1.5.1':
-    resolution: {integrity: sha512-G7jFEDzlJVyq3dUfzGPFXSQuMqOCGYPjQUK6GSeFEMJGB2A2XC2HwzoHYJcL6enDpaCe1WokstYZlm+zCdyedw==}
+  '@mlightcad/cad-html-plugin@1.5.3':
+    resolution: {integrity: sha512-gBJvJ98GZ1zvsRI3gIW/dFn0taDs5vW2/zalfD0bMJnjz6FjumJSKUmm/Y7YT5EEI/wr844Oq0Dhh02lKVZRpg==}
     peerDependencies:
-      '@mlightcad/data-model': ^1.7.40
-      '@mlightcad/three-renderer': ^1.5.1
+      '@mlightcad/cad-simple-viewer': 1.5.3
+      '@mlightcad/data-model': ^1.8.1
+      '@mlightcad/three-renderer': 1.5.3
       three: ^0.172.0
 
-  '@mlightcad/cad-simple-viewer@1.5.1':
-    resolution: {integrity: sha512-kW+ILc3GF5xWaBN3WMS/G3qr7X9n1lKDUhnsfcBLVzwjl3jHs5l8p8fuk/AwheSWTtH5q9y8NwQNcfkaKL29dA==}
+  '@mlightcad/cad-pdf-plugin@1.5.3':
+    resolution: {integrity: sha512-dg/i64i9ldZxe2Rxu9fWZT0uH9yQM1RTnW77efylyIEYrRGQFzmSHcSkkDfUS5r1TyfDuUqZSJ53Dnvy5yBKag==}
     peerDependencies:
-      '@mlightcad/cad-html-exporter': ^1.5.1
-      '@mlightcad/data-model': ^1.7.40
-      '@mlightcad/mtext-renderer': ^0.10.15
+      '@mlightcad/cad-simple-viewer': 1.5.3
+      '@mlightcad/cad-svg-plugin': 1.5.3
+      '@mlightcad/data-model': ^1.8.1
+
+  '@mlightcad/cad-simple-viewer@1.5.3':
+    resolution: {integrity: sha512-Ruhs6rAk2/PCQl9ZRRcH4c+g57gmsCPijDXqixu2FAWASx0K/6aj0RHF5vaQPoZDvl8m24+dkHlxBI2iWIUr9w==}
+    peerDependencies:
+      '@mlightcad/data-model': ^1.8.1
       lodash-es: 4.17.21
       three: ^0.172.0
 
-  '@mlightcad/common@1.4.40':
-    resolution: {integrity: sha512-RQDG7j6MiwVNbCAmszNLRzOJNc/pMilPnNzS2wnVTRI9k8wtINQmvEyEJjBQGSGK7p/2gmY1JwoKjYH36izcsw==}
+  '@mlightcad/cad-svg-plugin@1.5.3':
+    resolution: {integrity: sha512-hCZyThxufebnehMXnjV+R+M+RXehTczMjy3nFvSliscLPVZEuO9cclRYTNzE+l6EayFpyqAxxnDhX6nLck/d5Q==}
+    peerDependencies:
+      '@mlightcad/cad-simple-viewer': 1.5.3
+      '@mlightcad/data-model': ^1.8.1
+      '@mlightcad/mtext-parser': ^1.4.1
 
-  '@mlightcad/data-model@1.7.40':
-    resolution: {integrity: sha512-QWJA1CyNByt68FPVv4mi1e7hsJbyNzpkII4NBuJPCwzTwSonR97ix7m2JPEftV9bq0wMCcOg0uAbrTU/zAbJNQ==}
+  '@mlightcad/common@1.5.1':
+    resolution: {integrity: sha512-qq8d/NOAWmfYPP53ySPd/gUymn/G0gUuUJeF4Igae4/S+s+BG7WGo1Tphd737bBM65KiosUf+aiMCRTNH49Q0w==}
+
+  '@mlightcad/data-model@1.8.1':
+    resolution: {integrity: sha512-XJ924pwP4jZeLybtqgoMytrtX9pJP1IDnk//QLkez+ZygP9zFsEx+bSBy0Wun7tMooeWtGcQ0EfLNVABwzte3w==}
 
   '@mlightcad/dxf-json@1.2.0':
     resolution: {integrity: sha512-pfKFSMi84wmV1C4EAq4Axq20K1+12tXGI5epggxWZE++NeZBCQM5yuQYKYD/P8oSWz3c2nFHe9KhithAKUSnfQ==}
 
-  '@mlightcad/geometry-engine@3.2.40':
-    resolution: {integrity: sha512-dAs2kaW3BlL2sDmmLoHSY78k1mv2e5LMz6GPZKhlK2j+ttk2gfVYaNPx8VSCu5txCVmSYTJVTzkn/PR+ZlBzWw==}
+  '@mlightcad/geometry-engine@3.3.1':
+    resolution: {integrity: sha512-vB00E6rs3UPSQZOuGX7SvrgSf1y8hbiykuQCSiKRC8zY4XV6Sv551aH/k+OusAKsUTJZvhw2wyidIjSRjaDxzw==}
     peerDependencies:
-      '@mlightcad/common': 1.4.40
+      '@mlightcad/common': 1.5.1
 
-  '@mlightcad/graphic-interface@3.3.40':
-    resolution: {integrity: sha512-uDO4OHmCWE/kEPCvG3fzb1H1MBi0mHkfXRZFk55lwrYrJEQccmYmfCTsHK+YvzAbrRVbWX0vpshhPya8ltCWvg==}
+  '@mlightcad/graphic-interface@3.4.1':
+    resolution: {integrity: sha512-DpBe56zzpYBFHOIdJhGLwCWRMf3rzccNeeVZ32s0iH55qNhylDPwqEHhfwlzqIRP4jXZGBG1R6N/WRdNEzKvVg==}
     peerDependencies:
-      '@mlightcad/common': 1.4.40
-      '@mlightcad/geometry-engine': 3.2.40
-
-  '@mlightcad/libredwg-converter@3.6.0':
-    resolution: {integrity: sha512-cJUyGixUqYTjTfFR7790x+8l7Dean9QPlWnsjaKw7vkhRkDYjzrl7jVqRN+ROXb1/6JgSqdpMcRZxf4Gs3AEQQ==}
-    peerDependencies:
-      '@mlightcad/data-model': 1.8.0
-
-  '@mlightcad/libredwg-web@0.7.1':
-    resolution: {integrity: sha512-jHiLB6Rktty0eJLS+/awITmTQbTrJl4U6hkzqzzbBfHzhrR38mKnQTPLuhZMyX1IcKOM0zuDOh7Fd/J7Rj6/KQ==}
+      '@mlightcad/common': 1.5.1
+      '@mlightcad/geometry-engine': 3.3.1
 
   '@mlightcad/mtext-parser@1.4.1':
     resolution: {integrity: sha512-PU7D5H/k25vZpTERabpdn5HVAs8+SBNRqgi08wRPiplxTE1eB/zBZRNRrSwHqyWx6xMeQmZ9mhh9DPNpte3gYQ==}
 
-  '@mlightcad/mtext-renderer@0.10.15':
-    resolution: {integrity: sha512-KqP00rhM9gVy5VJ6JxYLQD5wRtNHclXN7L8wfKHYicLdfSL23pDRNOCkFeFdSyUDlYlXmvuGAWgY+NvnYerQpg==}
+  '@mlightcad/mtext-renderer@0.10.16':
+    resolution: {integrity: sha512-mCDvR6fvIvK4ZxkK+P8WbEwmsJMVh3Z+AiONbPB44pE5x7ZZGFDIGr/8zLCNPZFZbFqwCkNmCeWc99r3bR6GKw==}
     peerDependencies:
       three: ^0.172.0
 
   '@mlightcad/shx-parser@1.3.2':
     resolution: {integrity: sha512-j84hqbWOVMDuepLEjVsYvxeiCXOVxHyJhl4gM4HtgXZ6ChgTLsuSnqs2bNOt2SwriTvFOsv3QLsOu2iJh857JA==}
 
-  '@mlightcad/three-renderer@1.5.1':
-    resolution: {integrity: sha512-0yPQjeL9X8tNvZfxpH29k152mHUiJ3GWRQYaCcYGTMUq6In7fERBScU0P8DFQ9n61oRB+DtP2COsXGRAe2iu6g==}
+  '@mlightcad/three-renderer@1.5.3':
+    resolution: {integrity: sha512-qdj6DkZAySBlNbCEOuMg/SBa/VfV0MJz1SzQl7WpzxTWM5kL/GqPRoMksPWAGXbZR4PAEV+Is/cB7+FqaAFG0g==}
     peerDependencies:
-      '@mlightcad/data-model': ^1.7.40
-      '@mlightcad/mtext-renderer': ^0.10.15
+      '@mlightcad/data-model': ^1.8.1
+      '@mlightcad/mtext-renderer': ^0.10.16
       '@velipso/polybool': ^1.1.1
       three: ^0.172.0
 
@@ -382,51 +376,13 @@ packages:
   '@velipso/polybool@1.1.1':
     resolution: {integrity: sha512-HlWrm/wloLkUDHPQ1AgUdXysKL3y+rqV94udU5CVTtEPci5v6WjEfozNJTOOSwCsz50ySIxJK4gABqfbx1sD7A==}
 
-  '@volar/language-core@2.4.15':
-    resolution: {integrity: sha512-3VHw+QZU0ZG9IuQmzT68IyN4hZNd9GchGPhbD9+pa8CVv7rnoOZwo7T8weIbrRmihqy3ATpdfXFnqRrfPVK6CA==}
-
-  '@volar/source-map@2.4.15':
-    resolution: {integrity: sha512-CPbMWlUN6hVZJYGcU/GSoHu4EnCHiLaXI9n8c9la6RaI9W5JHX+NqG+GSQcB0JdC2FIBLdZJwGsfKyBB71VlTg==}
-
-  '@volar/typescript@2.4.15':
-    resolution: {integrity: sha512-2aZ8i0cqPGjXb4BhkMsPYDkkuc2ZQ6yOpqwAuNwUoncELqoy5fRgOQtLR9gB0g902iS0NAkvpIzs27geVyVdPg==}
-
-  '@vue/compiler-core@3.5.21':
-    resolution: {integrity: sha512-8i+LZ0vf6ZgII5Z9XmUvrCyEzocvWT+TeR2VBUVlzIH6Tyv57E20mPZ1bCS+tbejgUgmjrEh7q/0F0bibskAmw==}
-
-  '@vue/compiler-dom@3.5.21':
-    resolution: {integrity: sha512-jNtbu/u97wiyEBJlJ9kmdw7tAr5Vy0Aj5CgQmo+6pxWNQhXZDPsRr1UWPN4v3Zf82s2H3kF51IbzZ4jMWAgPlQ==}
-
-  '@vue/compiler-vue2@2.7.16':
-    resolution: {integrity: sha512-qYC3Psj9S/mfu9uVi5WvNZIzq+xnXMhOwbTFKKDD7b1lhpnn71jXSFdTQ+WsIEk0ONCd7VV2IMm7ONl6tbQ86A==}
-
-  '@vue/language-core@2.2.12':
-    resolution: {integrity: sha512-IsGljWbKGU1MZpBPN+BvPAdr55YPkj2nB/TBNGNC32Vy2qLG25DYu/NBN2vNtZqdRbTRjaoYrahLrToim2NanA==}
-    peerDependencies:
-      typescript: '*'
-    peerDependenciesMeta:
-      typescript:
-        optional: true
-
-  '@vue/shared@3.5.21':
-    resolution: {integrity: sha512-+2k1EQpnYuVuu3N7atWyG3/xoFWIVJZq4Mz8XNOdScFI0etES75fbny/oU4lKWk/577P1zmg0ioYvpGEDZ3DLw==}
-
-  alien-signals@1.0.13:
-    resolution: {integrity: sha512-OGj9yyTnJEttvzhTUWuscOvtqxq5vrhF7vL9oS0xJ2mK0ItPYP1/y+vCFebfxoEyAz0++1AIwJ5CMr+Fk3nDmg==}
-
   anymatch@3.1.3:
     resolution: {integrity: sha512-KMReFUr0B4t+D+OBkjR3KYqvocp2XaSzO55UcB6mgQMd3KbcE+mWTyvVV7D/zsdEbNnV6acZUutkiHQXvTr1Rw==}
     engines: {node: '>= 8'}
 
-  balanced-match@1.0.2:
-    resolution: {integrity: sha512-3oSeUO0TMV67hN1AmbXsK4yaqU7tjiHlbxRDZOpH0KW9+CeX4bRAaX0Anxt0tx2MrpRpWwQaPwIlISEJhYU5Pw==}
-
   binary-extensions@2.3.0:
     resolution: {integrity: sha512-Ceh+7ox5qe7LJuLHoY0feh3pHuUDHAcRUeyL2VYghZwfpkNIy/+8Ocg0a3UuSoYzavmylwuLWQOf3hl0jjMMIw==}
     engines: {node: '>=8'}
-
-  brace-expansion@2.0.2:
-    resolution: {integrity: sha512-Jt0vHyM+jmUBqojB7E1NIYadt0vI0Qxjxd2TErW94wDz+E2LAm5vKMXXwg6ZZBTHPuUlDgQHKXvjGBdfcF1ZDQ==}
 
   braces@3.0.3:
     resolution: {integrity: sha512-yQbXgO/OSZVD2IsiLlro+7Hf6Q18EJrKSEsdoMzKePKXct3gvD8oLcOQdIzGupr5Fj+EDe8gO/lxc1BzfMpxvA==}
@@ -436,20 +392,10 @@ packages:
     resolution: {integrity: sha512-7VT13fmjotKpGipCW9JEQAusEPE+Ei8nl6/g4FBAmIm0GOOLMua9NDDo/DWp0ZAxCr3cPq5ZpBqmPAQgDda2Pw==}
     engines: {node: '>= 8.10.0'}
 
-  de-indent@1.0.2:
-    resolution: {integrity: sha512-e/1zu3xH5MQryN2zdVaF0OrdNLUbvWxzMbi+iNA6Bky7l1RoP8a2fIbRocyHclXt/arDrrR6lL3TqFD9pMQTsg==}
-
-  entities@4.5.0:
-    resolution: {integrity: sha512-V0hjH4dGPh9Ao5p0MoRY6BVqtwCjhz6vI5LT8AJ55H+4g9/4vbHx1I54fS0XuclLhDHArPQCiMjDxjaL8fPxhw==}
-    engines: {node: '>=0.12'}
-
   esbuild@0.21.5:
     resolution: {integrity: sha512-mg3OPMV4hXywwpoDxu3Qda5xCKQi+vCTZq8S9J/EpkhB2HzKXq4SNFZE3+NK93JYxc8VMSep+lOUSC/RVKaBqw==}
     engines: {node: '>=12'}
     hasBin: true
-
-  estree-walker@2.0.2:
-    resolution: {integrity: sha512-Rfkk/Mp/DL7JVje3u18FxFujQlTNR2q6QfMSMB7AvCBx91NGj/ba3kCfza0f6dVDbw7YlRf/nDrn7pQrCCyQ/w==}
 
   fdir@6.5.0:
     resolution: {integrity: sha512-tIbYtZbucOs0BRGqPJkshJUYdL+SDH7dVM8gjy+ERp3WAUjLEFJE+02kanyHtwjWOnwrKYBiwAmM0p4kLJAnXg==}
@@ -459,9 +405,6 @@ packages:
     peerDependenciesMeta:
       picomatch:
         optional: true
-
-  fflate@0.8.3:
-    resolution: {integrity: sha512-tbZNuJrLwGUp3zshBtdy4W+ORxZuIh8a5ilyIEQDC5rY1f3U20JMry0Ll3WBzU58EZKsEuJFXhb5gwv8CsPvgA==}
 
   fill-range@7.1.1:
     resolution: {integrity: sha512-YsGpe3WHLK8ZYi4tWDg2Jy3ebRz2rXowDxnld4bkQB00cc/1Zw9AWnC0i9ztDJitivtQvaI9KaLyKrc+hBW0yg==}
@@ -482,10 +425,6 @@ packages:
 
   graceful-fs@4.2.11:
     resolution: {integrity: sha512-RbJ5/jmFcNNCcDV5o9eTnBLJ/HszWV0P73bc+Ff4nS/rJj+YaS6IGyiOL0VoBYX+l1Wrl3k63h/KrH+nhJ0XvQ==}
-
-  he@1.2.0:
-    resolution: {integrity: sha512-F/1DnUGPopORZi0ni+CvrCgHQ5FyEAHRLSApuYWMmrbSwoN2Mn/7k+Gl38gJnR7yyDZk6WLXwiGod1JOWNDKGw==}
-    hasBin: true
 
   iconv-lite@0.7.0:
     resolution: {integrity: sha512-cf6L2Ds3h57VVmkZe+Pn+5APsT7FpqJtEhhieDCvrE2MK5Qk9MyffgQyuxQTm6BChfeZNtcOLHp9IcWRVcIcBQ==}
@@ -520,16 +459,6 @@ packages:
     resolution: {integrity: sha512-HgMmCqIJSAKqo68l0rS2AanEWfkxaZ5wNiEFb5ggm08lDs9Xl2KxBlX3PTcaD2chBM1gXAYf491/M2Rv8Jwayg==}
     engines: {node: '>= 0.6.0'}
 
-  minimatch@9.0.5:
-    resolution: {integrity: sha512-G6T0ZX48xgozx7587koeX9Ys2NYy6Gmv//P89sEte9V9whIapMNF4idKxnW2QtCcLiTWlb/wfCabAtAFWhhBow==}
-    engines: {node: '>=16 || 14 >=14.17'}
-
-  mitt@3.0.1:
-    resolution: {integrity: sha512-vKivATfr97l2/QBCYAkXYDbrIWPM2IIKEl7YPhjCvKlG3kE2gm+uBo6nEXK3M5/Ffh/FLpKExzOQ3JJoJGFKBw==}
-
-  muggle-string@0.4.1:
-    resolution: {integrity: sha512-VNTrAak/KhO2i8dqqnqnAHOa3cYBwXEZe9h+D5h/1ZqFSTEFHdM65lR7RoIqq3tBBYavsOXV84NoHXZ0AkPyqQ==}
-
   nanoid@3.3.11:
     resolution: {integrity: sha512-N8SpfPUnUp1bK+PMYW8qSWdl9U+wwNWI4QKxOYDy9JAro3WMX7p2OeVRF9v+347pnakNevPmiHhNmZ2HbFA76w==}
     engines: {node: ^10 || ^12 || ^13.7 || ^14 || >=15.0.1}
@@ -548,9 +477,6 @@ packages:
     resolution: {integrity: sha512-VkndIv2fIB99swvQoA65bm+fsmt6UNdGeIB0oxBs+WhAhdh08QA04JXpI7rbB9r08/nkbysKoya9rtDERYOYMA==}
     engines: {node: '>=18'}
 
-  path-browserify@1.0.1:
-    resolution: {integrity: sha512-b7uo2UCUOYZcnF/3ID0lulOJi/bafxa1xPe7ZPsammBSpjSWQkjNxlt635YGS2MiR9GjvuXCtz2emr3jbsz98g==}
-
   picocolors@1.1.1:
     resolution: {integrity: sha512-xceH2snhtb5M9liqDsmEw56le376mTZkEX/jEb/RxNFyegNul7eNslCXP9FDj/Lcu0X8KEyMceP2ntpaHrDEVA==}
 
@@ -565,12 +491,6 @@ packages:
   postcss@8.5.6:
     resolution: {integrity: sha512-3Ybi1tAuwAP9s0r1UQ2J4n5Y0G05bJkpUIO0/bI9MhwmD70S5aTWbXGBwxHrelT+XM1k6dM0pk+SwNkpTRN7Pg==}
     engines: {node: ^10 || ^12 || >=14}
-
-  quickselect@3.0.0:
-    resolution: {integrity: sha512-XdjUArbK4Bm5fLLvlm5KpTFOiOThgfWWI4axAZDWg4E/0mKdZyI9tNEfds27qCi1ze/vwTR16kvmmGhRra3c2g==}
-
-  rbush@4.0.1:
-    resolution: {integrity: sha512-IP0UpfeWQujYC8Jg162rMNc01Rf0gWMMAb2Uxus/Q0qOFw4lCcq6ZnQEZwUoJqWyUGJ9th7JjwI4yIWo+uvoAQ==}
 
   readdirp@3.6.0:
     resolution: {integrity: sha512-hOS089on8RduqdbhvQ5Z37A0ESjsqz6qnRcffsMU3495FuTdqSm+7bhJ29JvIOsBDEEnan5DPu9t3To9VRlMzA==}
@@ -658,29 +578,7 @@ packages:
       terser:
         optional: true
 
-  vscode-uri@3.1.0:
-    resolution: {integrity: sha512-/BpdSx+yCQGnCvecbyXdxHDkuk55/G3xwnC0GqY4gmQ3j+A+g8kzzgB4Nk/SINjqn6+waqw3EgbVF2QKExkRxQ==}
-
-  vue-tsc@2.2.12:
-    resolution: {integrity: sha512-P7OP77b2h/Pmk+lZdJ0YWs+5tJ6J2+uOQPo7tlBnY44QqQSPYvS0qVT4wqDJgwrZaLe47etJLLQRFia71GYITw==}
-    hasBin: true
-    peerDependencies:
-      typescript: '>=5.0.0'
-
 snapshots:
-
-  '@babel/helper-string-parser@7.27.1': {}
-
-  '@babel/helper-validator-identifier@7.27.1': {}
-
-  '@babel/parser@7.28.4':
-    dependencies:
-      '@babel/types': 7.28.4
-
-  '@babel/types@7.28.4':
-    dependencies:
-      '@babel/helper-string-parser': 7.27.1
-      '@babel/helper-validator-identifier': 7.27.1
 
   '@esbuild/aix-ppc64@0.21.5':
     optional: true
@@ -757,34 +655,41 @@ snapshots:
 
   '@lukeed/csprng@1.1.0': {}
 
-  '@mlightcad/cad-html-exporter@1.5.1(@mlightcad/data-model@1.7.40)(@mlightcad/three-renderer@1.5.1(@mlightcad/data-model@1.7.40)(@mlightcad/mtext-renderer@0.10.15(three@0.172.0))(@velipso/polybool@1.1.1)(three@0.172.0))(three@0.172.0)':
+  '@mlightcad/cad-html-plugin@1.5.3(@mlightcad/cad-simple-viewer@1.5.3(@mlightcad/data-model@1.8.1)(lodash-es@4.17.21)(three@0.172.0))(@mlightcad/data-model@1.8.1)(@mlightcad/three-renderer@1.5.3(@mlightcad/data-model@1.8.1)(@mlightcad/mtext-renderer@0.10.16(three@0.172.0))(@velipso/polybool@1.1.1)(three@0.172.0))(three@0.172.0)':
     dependencies:
-      '@mlightcad/data-model': 1.7.40
-      '@mlightcad/three-renderer': 1.5.1(@mlightcad/data-model@1.7.40)(@mlightcad/mtext-renderer@0.10.15(three@0.172.0))(@velipso/polybool@1.1.1)(three@0.172.0)
-      fflate: 0.8.3
+      '@mlightcad/cad-simple-viewer': 1.5.3(@mlightcad/data-model@1.8.1)(lodash-es@4.17.21)(three@0.172.0)
+      '@mlightcad/data-model': 1.8.1
+      '@mlightcad/three-renderer': 1.5.3(@mlightcad/data-model@1.8.1)(@mlightcad/mtext-renderer@0.10.16(three@0.172.0))(@velipso/polybool@1.1.1)(three@0.172.0)
       three: 0.172.0
 
-  '@mlightcad/cad-simple-viewer@1.5.1(@mlightcad/cad-html-exporter@1.5.1(@mlightcad/data-model@1.7.40)(@mlightcad/three-renderer@1.5.1(@mlightcad/data-model@1.7.40)(@mlightcad/mtext-renderer@0.10.15(three@0.172.0))(@velipso/polybool@1.1.1)(three@0.172.0))(three@0.172.0))(@mlightcad/data-model@1.7.40)(@mlightcad/mtext-renderer@0.10.15(three@0.172.0))(lodash-es@4.17.21)(three@0.172.0)':
+  '@mlightcad/cad-pdf-plugin@1.5.3(@mlightcad/cad-simple-viewer@1.5.3(@mlightcad/data-model@1.8.1)(lodash-es@4.17.21)(three@0.172.0))(@mlightcad/cad-svg-plugin@1.5.3(@mlightcad/cad-simple-viewer@1.5.3(@mlightcad/data-model@1.8.1)(lodash-es@4.17.21)(three@0.172.0))(@mlightcad/data-model@1.8.1)(@mlightcad/mtext-parser@1.4.1))(@mlightcad/data-model@1.8.1)':
     dependencies:
-      '@mlightcad/cad-html-exporter': 1.5.1(@mlightcad/data-model@1.7.40)(@mlightcad/three-renderer@1.5.1(@mlightcad/data-model@1.7.40)(@mlightcad/mtext-renderer@0.10.15(three@0.172.0))(@velipso/polybool@1.1.1)(three@0.172.0))(three@0.172.0)
-      '@mlightcad/data-model': 1.7.40
-      '@mlightcad/libredwg-converter': 3.6.0(@mlightcad/data-model@1.7.40)
-      '@mlightcad/mtext-renderer': 0.10.15(three@0.172.0)
+      '@mlightcad/cad-simple-viewer': 1.5.3(@mlightcad/data-model@1.8.1)(lodash-es@4.17.21)(three@0.172.0)
+      '@mlightcad/cad-svg-plugin': 1.5.3(@mlightcad/cad-simple-viewer@1.5.3(@mlightcad/data-model@1.8.1)(lodash-es@4.17.21)(three@0.172.0))(@mlightcad/data-model@1.8.1)(@mlightcad/mtext-parser@1.4.1)
+      '@mlightcad/data-model': 1.8.1
+
+  '@mlightcad/cad-simple-viewer@1.5.3(@mlightcad/data-model@1.8.1)(lodash-es@4.17.21)(three@0.172.0)':
+    dependencies:
+      '@mlightcad/data-model': 1.8.1
       lodash-es: 4.17.21
-      mitt: 3.0.1
-      rbush: 4.0.1
       three: 0.172.0
 
-  '@mlightcad/common@1.4.40':
+  '@mlightcad/cad-svg-plugin@1.5.3(@mlightcad/cad-simple-viewer@1.5.3(@mlightcad/data-model@1.8.1)(lodash-es@4.17.21)(three@0.172.0))(@mlightcad/data-model@1.8.1)(@mlightcad/mtext-parser@1.4.1)':
+    dependencies:
+      '@mlightcad/cad-simple-viewer': 1.5.3(@mlightcad/data-model@1.8.1)(lodash-es@4.17.21)(three@0.172.0)
+      '@mlightcad/data-model': 1.8.1
+      '@mlightcad/mtext-parser': 1.4.1
+
+  '@mlightcad/common@1.5.1':
     dependencies:
       loglevel: 1.9.2
 
-  '@mlightcad/data-model@1.7.40':
+  '@mlightcad/data-model@1.8.1':
     dependencies:
-      '@mlightcad/common': 1.4.40
+      '@mlightcad/common': 1.5.1
       '@mlightcad/dxf-json': 1.2.0
-      '@mlightcad/geometry-engine': 3.2.40(@mlightcad/common@1.4.40)
-      '@mlightcad/graphic-interface': 3.3.40(@mlightcad/common@1.4.40)(@mlightcad/geometry-engine@3.2.40(@mlightcad/common@1.4.40))
+      '@mlightcad/geometry-engine': 3.3.1(@mlightcad/common@1.5.1)
+      '@mlightcad/graphic-interface': 3.4.1(@mlightcad/common@1.5.1)(@mlightcad/geometry-engine@3.3.1(@mlightcad/common@1.5.1))
       iconv-lite: 0.7.0
       uid: 2.0.2
 
@@ -792,25 +697,18 @@ snapshots:
     dependencies:
       '@fxts/core': 1.17.0
 
-  '@mlightcad/geometry-engine@3.2.40(@mlightcad/common@1.4.40)':
+  '@mlightcad/geometry-engine@3.3.1(@mlightcad/common@1.5.1)':
     dependencies:
-      '@mlightcad/common': 1.4.40
+      '@mlightcad/common': 1.5.1
 
-  '@mlightcad/graphic-interface@3.3.40(@mlightcad/common@1.4.40)(@mlightcad/geometry-engine@3.2.40(@mlightcad/common@1.4.40))':
+  '@mlightcad/graphic-interface@3.4.1(@mlightcad/common@1.5.1)(@mlightcad/geometry-engine@3.3.1(@mlightcad/common@1.5.1))':
     dependencies:
-      '@mlightcad/common': 1.4.40
-      '@mlightcad/geometry-engine': 3.2.40(@mlightcad/common@1.4.40)
-
-  '@mlightcad/libredwg-converter@3.6.0(@mlightcad/data-model@1.7.40)':
-    dependencies:
-      '@mlightcad/data-model': 1.7.40
-      '@mlightcad/libredwg-web': 0.7.1
-
-  '@mlightcad/libredwg-web@0.7.1': {}
+      '@mlightcad/common': 1.5.1
+      '@mlightcad/geometry-engine': 3.3.1(@mlightcad/common@1.5.1)
 
   '@mlightcad/mtext-parser@1.4.1': {}
 
-  '@mlightcad/mtext-renderer@0.10.15(three@0.172.0)':
+  '@mlightcad/mtext-renderer@0.10.16(three@0.172.0)':
     dependencies:
       '@mlightcad/mtext-parser': 1.4.1
       '@mlightcad/shx-parser': 1.3.2
@@ -821,10 +719,10 @@ snapshots:
 
   '@mlightcad/shx-parser@1.3.2': {}
 
-  '@mlightcad/three-renderer@1.5.1(@mlightcad/data-model@1.7.40)(@mlightcad/mtext-renderer@0.10.15(three@0.172.0))(@velipso/polybool@1.1.1)(three@0.172.0)':
+  '@mlightcad/three-renderer@1.5.3(@mlightcad/data-model@1.8.1)(@mlightcad/mtext-renderer@0.10.16(three@0.172.0))(@velipso/polybool@1.1.1)(three@0.172.0)':
     dependencies:
-      '@mlightcad/data-model': 1.7.40
-      '@mlightcad/mtext-renderer': 0.10.15(three@0.172.0)
+      '@mlightcad/data-model': 1.8.1
+      '@mlightcad/mtext-renderer': 0.10.16(three@0.172.0)
       '@velipso/polybool': 1.1.1
       three: 0.172.0
 
@@ -900,65 +798,12 @@ snapshots:
     dependencies:
       tslib: 2.8.1
 
-  '@volar/language-core@2.4.15':
-    dependencies:
-      '@volar/source-map': 2.4.15
-
-  '@volar/source-map@2.4.15': {}
-
-  '@volar/typescript@2.4.15':
-    dependencies:
-      '@volar/language-core': 2.4.15
-      path-browserify: 1.0.1
-      vscode-uri: 3.1.0
-
-  '@vue/compiler-core@3.5.21':
-    dependencies:
-      '@babel/parser': 7.28.4
-      '@vue/shared': 3.5.21
-      entities: 4.5.0
-      estree-walker: 2.0.2
-      source-map-js: 1.2.1
-
-  '@vue/compiler-dom@3.5.21':
-    dependencies:
-      '@vue/compiler-core': 3.5.21
-      '@vue/shared': 3.5.21
-
-  '@vue/compiler-vue2@2.7.16':
-    dependencies:
-      de-indent: 1.0.2
-      he: 1.2.0
-
-  '@vue/language-core@2.2.12(typescript@5.9.2)':
-    dependencies:
-      '@volar/language-core': 2.4.15
-      '@vue/compiler-dom': 3.5.21
-      '@vue/compiler-vue2': 2.7.16
-      '@vue/shared': 3.5.21
-      alien-signals: 1.0.13
-      minimatch: 9.0.5
-      muggle-string: 0.4.1
-      path-browserify: 1.0.1
-    optionalDependencies:
-      typescript: 5.9.2
-
-  '@vue/shared@3.5.21': {}
-
-  alien-signals@1.0.13: {}
-
   anymatch@3.1.3:
     dependencies:
       normalize-path: 3.0.0
       picomatch: 2.3.1
 
-  balanced-match@1.0.2: {}
-
   binary-extensions@2.3.0: {}
-
-  brace-expansion@2.0.2:
-    dependencies:
-      balanced-match: 1.0.2
 
   braces@3.0.3:
     dependencies:
@@ -975,10 +820,6 @@ snapshots:
       readdirp: 3.6.0
     optionalDependencies:
       fsevents: 2.3.3
-
-  de-indent@1.0.2: {}
-
-  entities@4.5.0: {}
 
   esbuild@0.21.5:
     optionalDependencies:
@@ -1006,13 +847,9 @@ snapshots:
       '@esbuild/win32-ia32': 0.21.5
       '@esbuild/win32-x64': 0.21.5
 
-  estree-walker@2.0.2: {}
-
   fdir@6.5.0(picomatch@4.0.3):
     optionalDependencies:
       picomatch: 4.0.3
-
-  fflate@0.8.3: {}
 
   fill-range@7.1.1:
     dependencies:
@@ -1032,8 +869,6 @@ snapshots:
       is-glob: 4.0.3
 
   graceful-fs@4.2.11: {}
-
-  he@1.2.0: {}
 
   iconv-lite@0.7.0:
     dependencies:
@@ -1063,14 +898,6 @@ snapshots:
 
   loglevel@1.9.2: {}
 
-  minimatch@9.0.5:
-    dependencies:
-      brace-expansion: 2.0.2
-
-  mitt@3.0.1: {}
-
-  muggle-string@0.4.1: {}
-
   nanoid@3.3.11: {}
 
   normalize-path@3.0.0: {}
@@ -1081,8 +908,6 @@ snapshots:
       tiny-inflate: 1.0.3
 
   p-map@7.0.3: {}
-
-  path-browserify@1.0.1: {}
 
   picocolors@1.1.1: {}
 
@@ -1095,12 +920,6 @@ snapshots:
       nanoid: 3.3.11
       picocolors: 1.1.1
       source-map-js: 1.2.1
-
-  quickselect@3.0.0: {}
-
-  rbush@4.0.1:
-    dependencies:
-      quickselect: 3.0.0
 
   readdirp@3.6.0:
     dependencies:
@@ -1179,11 +998,3 @@ snapshots:
       rollup: 4.52.0
     optionalDependencies:
       fsevents: 2.3.3
-
-  vscode-uri@3.1.0: {}
-
-  vue-tsc@2.2.12(typescript@5.9.2):
-    dependencies:
-      '@volar/typescript': 2.4.15
-      '@vue/language-core': 2.2.12(typescript@5.9.2)
-      typescript: 5.9.2
