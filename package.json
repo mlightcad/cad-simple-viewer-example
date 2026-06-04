@@ -9,15 +9,14 @@
     "url": "https://github.com/mlightcad/cad-simple-viewer-example"
   },
   "scripts": {
-    "build": "vue-tsc && vite build",
+    "build": "tsc && vite build",
     "dev": "vite",
     "preview": "vite preview"
   },
   "devDependencies": {
     "typescript": "^5.5.2",
     "vite": "^5.4.19",
-    "vite-plugin-static-copy": "^3.1.1",
-    "vue-tsc": "^2.1.6"
+    "vite-plugin-static-copy": "^3.1.1"
   },
   "dependencies": {
     "@mlightcad/cad-html-plugin": "1.5.3",

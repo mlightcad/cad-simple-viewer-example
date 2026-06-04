@@ -102,7 +102,33 @@
       }
       
       .file-input-container.loaded .button-group {
-        gap: 1rem;
+        gap: 0.75rem;
+        flex-wrap: wrap;
+        max-width: min(90vw, 520px);
+        justify-content: flex-start;
+      }
+
+      .file-input-container.loading-file .button-container.entry-actions {
+        display: none;
+      }
+
+      /* Must beat .button-container { display: flex } on the same element */
+      .button-container.export-actions {
+        display: none;
+      }
+
+      .file-input-container.show-export .button-container.export-actions {
+        display: flex;
+      }
+
+      .file-fab:disabled {
+        opacity: 0.45;
+        cursor: not-allowed;
+      }
+
+      .file-fab:disabled:hover {
+        background: #23272f;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.18);
       }
       
       .button-container {
@@ -135,7 +161,7 @@
     <div class="viewer-container">
       <div class="file-input-container" id="fileInputContainer">
         <div class="button-group">
-          <div class="button-container">
+          <div class="button-container entry-actions" id="openButtonContainer">
             <label class="file-fab" id="fileFab">
               <input type="file" id="fileInputElement" accept=".dxf,.dwg" />
               <svg width="40" height="40" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" class="file-icon">
@@ -145,13 +171,40 @@
             </label>
             <div class="file-fab-label">Open</div>
           </div>
-          <div class="button-container">
+          <div class="button-container entry-actions" id="newButtonContainer">
             <button class="file-fab" id="newDrawingButton">
               <svg width="40" height="40" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" class="file-icon">
                 <path d="M10 3v14M3 10h14"/>
               </svg>
             </button>
             <div class="file-fab-label">New</div>
+          </div>
+          <div class="button-container export-actions">
+            <button class="file-fab" id="exportHtmlButton" type="button" disabled title="Export HTML (chtml)">
+              <svg width="40" height="40" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" class="file-icon">
+                <path d="M4 4h12v12H4z"/>
+                <path d="M7 8h6M7 11h4"/>
+              </svg>
+            </button>
+            <div class="file-fab-label">HTML</div>
+          </div>
+          <div class="button-container export-actions">
+            <button class="file-fab" id="exportPdfButton" type="button" disabled title="Export PDF (cpdf)">
+              <svg width="40" height="40" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" class="file-icon">
+                <path d="M5 4h7l3 3v9H5z"/>
+                <path d="M12 4v3h3"/>
+              </svg>
+            </button>
+            <div class="file-fab-label">PDF</div>
+          </div>
+          <div class="button-container export-actions">
+            <button class="file-fab" id="exportSvgButton" type="button" disabled title="Export SVG (csvg)">
+              <svg width="40" height="40" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" class="file-icon">
+                <path d="M4 6h12v8H4z"/>
+                <path d="M7 9l2 2 4-4"/>
+              </svg>
+            </button>
+            <div class="file-fab-label">SVG</div>
           </div>
         </div>
       </div>
