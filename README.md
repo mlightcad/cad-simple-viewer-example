@@ -1,6 +1,6 @@
 # CAD Simple Viewer Example
 
-A vanilla TypeScript demo that shows how to embed [`@mlightcad/cad-simple-viewer`](https://github.com/mlightcad/cad-viewer/tree/main/packages/cad-simple-viewer) in a web page: open DXF/DWG files, create a sample drawing, register custom commands, and lazy-load HTML/PDF/SVG export plugins.
+A vanilla TypeScript demo that shows how to embed [`@mlightcad/cad-simple-viewer`](https://github.com/mlightcad/cad-viewer/tree/main/packages/cad-simple-viewer) in a web page: open DXF/DWG files, create a sample drawing, register custom commands, and dynamically load HTML/PDF/SVG export plugins via `registerLazyPlugin`.
 
 [**Live demo**](https://mlightcad.github.io/cad-simple-viewer-example/)
 
@@ -9,7 +9,7 @@ A vanilla TypeScript demo that shows how to embed [`@mlightcad/cad-simple-viewer
 - **Local files** — Open `.dxf` / `.dwg` via the file picker
 - **New drawing** — Create a sample drawing with predefined entities (`DocCreator`)
 - **Custom command** — Demo ellipse command (`ellipsedemo`)
-- **Lazy export plugins** — HTML (`chtml`), PDF (`cpdf`), SVG (`csvg`) load on first use
+- **Dynamic export plugins** — HTML (`chtml`), PDF (`cpdf`), SVG (`csvg`) load in separate chunks on first use via `import()`
 - **Browser-only** — Parsing and rendering run in the browser (Web Workers + WebAssembly for DWG)
 
 ## Prerequisites
@@ -31,7 +31,7 @@ The build copies parser workers and `viewer-runtime.iife.js` into `dist/assets/`
 
 1. Start the dev server and open the URL shown in the terminal.
 2. **Open** — Choose a `.dxf` or `.dwg` file, or click **New** to create the sample drawing.
-3. After a file is opened successfully, **HTML**, **PDF**, and **SVG** export buttons appear. Plugins are fetched on first export, so the first run may take a moment.
+3. After a file is opened successfully, **HTML**, **PDF**, and **SVG** export buttons appear. Each export dynamically imports its plugin chunk on first use, so the first run may take a moment.
 4. Run the custom ellipse command from the viewer command line: `ellipsedemo`.
 
 Toast messages at the top report success or errors. The window title updates when a document is activated.
@@ -45,24 +45,23 @@ Toast messages at the top report success or errors. The window title updates whe
 
 ## Plugin system (HTML / PDF / SVG export)
 
-Export commands moved out of `cad-simple-viewer` into separate npm packages. This example registers them **lazily** so they are not in the initial bundle until the user exports.
+Export commands live in separate npm packages, not in `cad-simple-viewer`. This example **does not** statically import those packages into the main bundle. Instead, each plugin is registered with a lazy loader that uses dynamic `import()`, so Vite/Rollup emits a separate chunk per plugin and the browser fetches it only when the user runs a trigger command.
 
-| Package | Plugin name | Trigger commands | Purpose |
-|---------|-------------|------------------|---------|
-| `@mlightcad/cad-html-plugin` | `HtmlPlugin` | `chtml` | Export drawing to offline HTML |
-| `@mlightcad/cad-pdf-plugin` | `PdfPlugin` | `cpdf`, `ipdf` | Export to PDF / import vector PDF |
-| `@mlightcad/cad-svg-plugin` | `SvgPlugin` | `csvg` | Export drawing to SVG |
+| Package | Plugin name | Factory | Trigger commands | Purpose |
+|---------|-------------|---------|------------------|---------|
+| `@mlightcad/cad-html-plugin` | `HtmlPlugin` | `createHtmlPlugin()` | `chtml` | Export drawing to offline HTML |
+| `@mlightcad/cad-pdf-plugin` | `PdfPlugin` | `createPdfPlugin()` | `cpdf`, `ipdf` | Export to PDF / import vector PDF |
+| `@mlightcad/cad-svg-plugin` | `SvgPlugin` | `createSvgPlugin()` | `csvg` | Export drawing to SVG |
 
 See the [Plugin System wiki](https://github.com/mlightcad/cad-viewer/wiki/Plugin-System) for how to build and register your own plugins.
 
-### Registration (this example)
+### Dynamic loading (this example)
 
-After `AcApDocManager.createInstance()`, register lazy plugins on `pluginManager`:
+**Do not** add top-level imports such as `import { createHtmlPlugin } from '@mlightcad/cad-html-plugin'` — that would pull the plugin into the main bundle. Keep plugin packages in `dependencies` (the bundler needs them at build time to emit lazy chunks), but load them inside `registerLazyPlugin` loaders.
+
+After `AcApDocManager.createInstance()`, register each plugin on `pluginManager`:
 
 ```typescript
-import { registerLazyHtmlPlugin } from '@mlightcad/cad-html-plugin'
-import { registerLazyPdfPlugin } from '@mlightcad/cad-pdf-plugin'
-import { registerLazySvgPlugin } from '@mlightcad/cad-svg-plugin'
 import { AcApDocManager } from '@mlightcad/cad-simple-viewer'
 
 AcApDocManager.createInstance({
@@ -77,11 +76,53 @@ AcApDocManager.createInstance({
   htmlViewerRuntimeUrl: './assets/viewer-runtime.iife.js'
 })
 
-const pm = AcApDocManager.instance.pluginManager
-registerLazyHtmlPlugin(pm)
-registerLazyPdfPlugin(pm)
-registerLazySvgPlugin(pm)
+const pluginManager = AcApDocManager.instance.pluginManager
+
+pluginManager.registerLazyPlugin({
+  name: 'HtmlPlugin',
+  triggers: ['chtml'],
+  loader: async () => {
+    const { createHtmlPlugin } = await import('@mlightcad/cad-html-plugin')
+    return createHtmlPlugin()
+  }
+})
+
+pluginManager.registerLazyPlugin({
+  name: 'PdfPlugin',
+  triggers: ['cpdf', 'ipdf'],
+  loader: async () => {
+    const { createPdfPlugin } = await import('@mlightcad/cad-pdf-plugin')
+    return createPdfPlugin()
+  }
+})
+
+pluginManager.registerLazyPlugin({
+  name: 'SvgPlugin',
+  triggers: ['csvg'],
+  loader: async () => {
+    const { createSvgPlugin } = await import('@mlightcad/cad-svg-plugin')
+    return createSvgPlugin()
+  }
+})
 ```
+
+How it works:
+
+1. **Registration** — `registerLazyPlugin` records the plugin name, trigger command(s), and an async `loader` only. No plugin code runs yet.
+2. **First trigger** — When the user runs `chtml`, `cpdf`, `ipdf`, or `csvg` (via UI or `sendStringToExecute`), the plugin manager calls the matching `loader`.
+3. **Dynamic import** — The loader’s `import('@mlightcad/cad-*-plugin')` fetches the plugin chunk, invokes the factory (`createHtmlPlugin`, etc.), and registers the returned plugin instance.
+4. **Subsequent use** — The plugin stays loaded; later exports do not re-download the chunk.
+
+To verify code-splitting, run `pnpm analyze` and open `stats.html` — plugin packages should appear as separate chunks, not inside the main entry.
+
+### Vite settings for lazy plugins
+
+`vite.config.ts` uses:
+
+- **`build.modulePreload: false`** — avoids injecting `<link rel="modulepreload">` for every lazy chunk on first paint; plugin chunks load only when triggered.
+- **Dynamic `import()` in source** — Rollup automatically splits each plugin into its own output file under `dist/assets/`.
+
+Plugin packages remain normal `dependencies` in `package.json`. They are resolved at build time and emitted as async chunks; they are not bundled into the initial JS payload.
 
 ### Run export commands
 
@@ -93,7 +134,7 @@ AcApDocManager.instance.sendStringToExecute('cpdf')
 AcApDocManager.instance.sendStringToExecute('csvg')
 ```
 
-`sendStringToExecute` loads the matching lazy plugin automatically on first use. You do not need to call `loadByTrigger` unless you want to preload before execution.
+`sendStringToExecute` runs the matching lazy loader on first use. You do not need to call `loadByTrigger` unless you want to preload a plugin before the user clicks export.
 
 ### Static assets for HTML export
 
@@ -114,16 +155,16 @@ If `viewer-runtime.iife.js` is missing or the URL is wrong, the dev server may r
 ```json
 {
   "dependencies": {
-    "@mlightcad/cad-simple-viewer": "^1.5.3",
-    "@mlightcad/data-model": "^1.8.1",
-    "@mlightcad/cad-html-plugin": "^1.5.3",
-    "@mlightcad/cad-pdf-plugin": "^1.5.3",
-    "@mlightcad/cad-svg-plugin": "^1.5.3"
+    "@mlightcad/cad-simple-viewer": "^1.5.5",
+    "@mlightcad/data-model": "^1.8.3",
+    "@mlightcad/cad-html-plugin": "^1.5.5",
+    "@mlightcad/cad-pdf-plugin": "^1.5.5",
+    "@mlightcad/cad-svg-plugin": "^1.5.5"
   }
 }
 ```
 
-Add export plugins only if you need those features.
+Add export plugin packages only for the formats you need, and register each one with `registerLazyPlugin` + dynamic `import()` as shown above.
 
 ### HTML container
 
@@ -139,7 +180,7 @@ Add export plugins only if you need those features.
 import { AcApDocManager } from '@mlightcad/cad-simple-viewer'
 import { AcDbOpenDatabaseOptions } from '@mlightcad/data-model'
 
-// ... createInstance + registerLazy*Plugin as above ...
+// ... createInstance + registerLazyPlugin loaders as above ...
 
 const fileContent = await readFile(file)
 const options: AcDbOpenDatabaseOptions = {
@@ -157,7 +198,7 @@ await AcApDocManager.instance.openDocument(file.name, fileContent, options)
 | Document manager | `AcApDocManager.createInstance({ container, baseUrl, webworkerFileUrls, htmlViewerRuntimeUrl })` |
 | Local open | `openDocument(name, ArrayBuffer, options)` |
 | Custom commands | `commandManager.addCommand(...)` — see `src/ellipseCmd.ts` |
-| Plugins | `registerLazyHtmlPlugin` / `registerLazyPdfPlugin` / `registerLazySvgPlugin` |
+| Lazy plugins | `pluginManager.registerLazyPlugin({ name, triggers, loader })` with dynamic `import()` |
 | Export UI | `sendStringToExecute('chtml' \| 'cpdf' \| 'csvg')` |
 | Workers & assets | `webworkerFileUrls`, static copy in Vite |
 
@@ -171,7 +212,7 @@ Lazy initialization: `AcApDocManager` is created on first file open or **New**, 
 | `src/main.ts` | `CadViewerApp` — viewer, plugins, export buttons |
 | `src/ellipseCmd.ts` | Custom `ellipsedemo` command |
 | `src/docCreator.ts` | Sample drawing factory for **New** |
-| `vite.config.ts` | `base: './'`, copies workers + `viewer-runtime.iife.js` |
+| `vite.config.ts` | `base: './'`, `modulePreload: false`, copies workers + `viewer-runtime.iife.js` |
 
 ## Beyond a viewer
 

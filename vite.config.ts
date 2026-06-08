@@ -1,8 +1,11 @@
 import { resolve } from 'path'
 import { defineConfig } from 'vite'
+import { visualizer } from 'rollup-plugin-visualizer'
 import { viteStaticCopy } from 'vite-plugin-static-copy'
 
-export default defineConfig(() => {
+export default defineConfig(({ mode }) => {
+  const analyze = mode === 'analyze'
+
   return {
     base: './',
     build: {
@@ -30,7 +33,13 @@ export default defineConfig(() => {
             dest: 'assets'
           }
         ]
-      })
-    ]
+      }),
+      analyze &&
+        visualizer({
+          filename: 'stats.html',
+          gzipSize: true,
+          brotliSize: true
+        })
+    ].filter(Boolean)
   }
 })

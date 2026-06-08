@@ -1,7 +1,4 @@
-import { registerLazyHtmlPlugin } from '@mlightcad/cad-html-plugin'
-import { registerLazyPdfPlugin } from '@mlightcad/cad-pdf-plugin'
 import { AcApDocManager, AcEdCommandStack } from '@mlightcad/cad-simple-viewer'
-import { registerLazySvgPlugin } from '@mlightcad/cad-svg-plugin'
 import { AcDbOpenDatabaseOptions } from '@mlightcad/data-model'
 import { DocCreator } from './docCreator'
 import { AcApEllipseCmd } from './ellipseCmd'
@@ -72,18 +69,18 @@ class CadViewerApp {
   private newDrawingButton: HTMLButtonElement
 
   /**
-   * Toolbar control that runs the `chtml` command (lazy {@link registerLazyHtmlPlugin}).
+   * Toolbar control that runs the `chtml` command (lazy HTML export plugin).
    * Visible only after a file is opened successfully; see `show-export` in `index.html`.
    */
   private exportHtmlButton: HTMLButtonElement
 
   /**
-   * Toolbar control that runs the `cpdf` command (lazy {@link registerLazyPdfPlugin}).
+   * Toolbar control that runs the `cpdf` command (lazy PDF export plugin).
    */
   private exportPdfButton: HTMLButtonElement
 
   /**
-   * Toolbar control that runs the `csvg` command (lazy {@link registerLazySvgPlugin}).
+   * Toolbar control that runs the `csvg` command (lazy SVG export plugin).
    */
   private exportSvgButton: HTMLButtonElement
 
@@ -204,15 +201,41 @@ class CadViewerApp {
    * | `@mlightcad/cad-pdf-plugin` | `cpdf`, `ipdf` |
    * | `@mlightcad/cad-svg-plugin` | `csvg` |
    *
+   * Loaders use dynamic `import()` so plugin bundles stay out of the main chunk.
+   *
    * Safe to call only once per application lifetime (guarded by {@link CadViewerApp.initialize}).
    *
    * @see https://github.com/mlightcad/cad-viewer/wiki/Plugin-System
    */
   private registerLazyPlugins(): void {
     const pluginManager = AcApDocManager.instance.pluginManager
-    registerLazyHtmlPlugin(pluginManager)
-    registerLazyPdfPlugin(pluginManager)
-    registerLazySvgPlugin(pluginManager)
+
+    pluginManager.registerLazyPlugin({
+      name: 'HtmlPlugin',
+      triggers: ['chtml'],
+      loader: async () => {
+        const { createHtmlPlugin } = await import('@mlightcad/cad-html-plugin')
+        return createHtmlPlugin()
+      }
+    })
+
+    pluginManager.registerLazyPlugin({
+      name: 'PdfPlugin',
+      triggers: ['cpdf', 'ipdf'],
+      loader: async () => {
+        const { createPdfPlugin } = await import('@mlightcad/cad-pdf-plugin')
+        return createPdfPlugin()
+      }
+    })
+
+    pluginManager.registerLazyPlugin({
+      name: 'SvgPlugin',
+      triggers: ['csvg'],
+      loader: async () => {
+        const { createSvgPlugin } = await import('@mlightcad/cad-svg-plugin')
+        return createSvgPlugin()
+      }
+    })
   }
 
   /**

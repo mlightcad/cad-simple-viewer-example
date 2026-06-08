@@ -10,19 +10,22 @@
   },
   "scripts": {
     "build": "tsc && vite build",
+    "analyze": "tsc && vite build --mode analyze",
     "dev": "vite",
     "preview": "vite preview"
   },
   "devDependencies": {
+    "rollup-plugin-visualizer": "^6.0.3",
     "typescript": "^5.5.2",
     "vite": "^5.4.19",
     "vite-plugin-static-copy": "^3.1.1"
   },
   "dependencies": {
-    "@mlightcad/cad-html-plugin": "1.5.3",
-    "@mlightcad/cad-pdf-plugin": "1.5.3",
-    "@mlightcad/cad-svg-plugin": "1.5.3",
-    "@mlightcad/cad-simple-viewer": "1.5.3",
-    "@mlightcad/data-model": "1.8.1"
+    "@mlightcad/cad-html-plugin": "1.5.5",
+    "@mlightcad/cad-pdf-plugin": "1.5.5",
+    "@mlightcad/cad-svg-plugin": "1.5.5",
+    "@mlightcad/cad-simple-viewer": "1.5.5",
+    "@mlightcad/data-model": "1.8.3",
+    "@mlightcad/mtext-renderer": "^0.11.1"
   }
 }

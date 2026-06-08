@@ -4,6 +4,7 @@
 docs
 dist
 lib
+stats.html
 tmp
 tsconfig.tsbuildinfo
 
