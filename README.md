@@ -10,6 +10,7 @@ A vanilla TypeScript demo that shows how to embed [`@mlightcad/cad-simple-viewer
 - **New drawing** — Create a sample drawing with predefined entities (`DocCreator`)
 - **Custom command** — Demo ellipse command (`ellipsedemo`)
 - **Dynamic export plugins** — HTML (`chtml`), PDF (`cpdf`), SVG (`csvg`) load in separate chunks on first use via `import()`
+- **Split viewer bundle** — Default Vite config puts `cad-simple-viewer` in its own chunk so the main entry stays small and the page loads quickly (see [Vite configuration](#vite-configuration))
 - **Browser-only** — Parsing and rendering run in the browser (Web Workers + WebAssembly for DWG)
 
 ## Prerequisites
@@ -25,7 +26,7 @@ pnpm build    # Typecheck + production build
 pnpm preview  # Serve dist/
 ```
 
-The build copies parser workers and `viewer-runtime.iife.js` into `dist/assets/` (see `vite.config.ts`).
+The build copies parser workers and `viewer-runtime.iife.js` into `dist/assets/` (see [Vite configuration](#vite-configuration)).
 
 ## Usage
 
@@ -113,16 +114,118 @@ How it works:
 3. **Dynamic import** — The loader’s `import('@mlightcad/cad-*-plugin')` fetches the plugin chunk, invokes the factory (`createHtmlPlugin`, etc.), and registers the returned plugin instance.
 4. **Subsequent use** — The plugin stays loaded; later exports do not re-download the chunk.
 
-To verify code-splitting, run `pnpm analyze` and open `stats.html` — plugin packages should appear as separate chunks, not inside the main entry.
+To verify code-splitting, run `pnpm analyze` and open `stats.html` — the viewer stack and each plugin should appear as separate chunks (or the viewer inside `main`, depending on your Vite setup; see below).
 
-### Vite settings for lazy plugins
+## Vite configuration
 
-`vite.config.ts` uses:
+Vite controls how `@mlightcad/cad-simple-viewer`, its parser workers, and export plugins land in `dist/`. This repo ships **two supported setups**. Both keep export plugins out of the main bundle via dynamic `import()` in `registerLazyPlugin` loaders; they differ in whether the viewer itself is split into its own chunk.
 
-- **`build.modulePreload: false`** — avoids injecting `<link rel="modulepreload">` for every lazy chunk on first paint; plugin chunks load only when triggered.
-- **Dynamic `import()` in source** — Rollup automatically splits each plugin into its own output file under `dist/assets/`.
+Shared settings (both approaches):
 
-Plugin packages remain normal `dependencies` in `package.json`. They are resolved at build time and emitted as async chunks; they are not bundled into the initial JS payload.
+- **`base: './'`** — relative asset URLs for static hosting (e.g. GitHub Pages).
+- **`build.modulePreload: false`** — do not inject `<link rel="modulepreload">` for lazy chunks; plugin bundles load only when a trigger command runs.
+- **`vite-plugin-static-copy`** — copy parser workers and `viewer-runtime.iife.js` into `dist/assets/` (required at runtime; not part of the JS bundle graph).
+- **`pnpm analyze`** — `vite build --mode analyze` writes `stats.html` for bundle inspection.
+
+### Approach A — Viewer in a separate chunk (default in this repo)
+
+Use `rollupOptions.output.manualChunks` to emit `@mlightcad/cad-simple-viewer` and its core dependencies (`data-model`, `three-renderer`, `geometry-engine`) as a single output file (e.g. `cad-simple-viewer-[hash].js`). Your app shell stays in `main-[hash].js`, which stays small so the initial HTML/JS parse is fast. Export plugins remain separate async chunks.
+
+**When to use:** production demos or apps where you want the smallest main entry and a dedicated, cacheable viewer chunk.
+
+```typescript
+import { resolve } from 'path'
+import { defineConfig } from 'vite'
+import { visualizer } from 'rollup-plugin-visualizer'
+import { viteStaticCopy } from 'vite-plugin-static-copy'
+
+const VIEWER_STACK =
+  /\/(cad-simple-viewer|three-renderer|data-model|geometry-engine)\//
+
+export default defineConfig(({ mode }) => ({
+  base: './',
+  build: {
+    modulePreload: false,
+    rollupOptions: {
+      input: { main: resolve(__dirname, 'index.html') },
+      output: {
+        manualChunks(id) {
+          const path = id.replace(/\\/g, '/')
+          if (VIEWER_STACK.test(path)) return 'cad-simple-viewer'
+        }
+      }
+    }
+  },
+  plugins: [
+    viteStaticCopy({
+      targets: [
+        {
+          src: './node_modules/@mlightcad/cad-simple-viewer/dist/*-worker.js',
+          dest: 'assets'
+        },
+        {
+          src: './node_modules/@mlightcad/cad-html-plugin/dist/viewer-runtime.iife.js',
+          dest: 'assets'
+        }
+      ]
+    }),
+    mode === 'analyze' &&
+      visualizer({ filename: 'stats.html', gzipSize: true, brotliSize: true })
+  ].filter(Boolean)
+}))
+```
+
+This matches the current [`vite.config.ts`](./vite.config.ts).
+
+### Approach B — Viewer in the main bundle (simpler)
+
+Omit `manualChunks`. Rollup bundles `cad-simple-viewer` into the main entry. Export plugins are still lazy-loaded with dynamic `import()` and never ship in that initial payload.
+
+**When to use:** smaller projects or prototypes where a simpler config matters more than minimizing main-bundle size.
+
+```typescript
+import { resolve } from 'path'
+import { defineConfig } from 'vite'
+import { visualizer } from 'rollup-plugin-visualizer'
+import { viteStaticCopy } from 'vite-plugin-static-copy'
+
+export default defineConfig(({ mode }) => ({
+  base: './',
+  build: {
+    modulePreload: false,
+    rollupOptions: {
+      input: { main: resolve(__dirname, 'index.html') }
+    }
+  },
+  plugins: [
+    viteStaticCopy({
+      targets: [
+        {
+          src: './node_modules/@mlightcad/cad-simple-viewer/dist/*-worker.js',
+          dest: 'assets'
+        },
+        {
+          src: './node_modules/@mlightcad/cad-html-plugin/dist/viewer-runtime.iife.js',
+          dest: 'assets'
+        }
+      ]
+    }),
+    mode === 'analyze' &&
+      visualizer({ filename: 'stats.html', gzipSize: true, brotliSize: true })
+  ].filter(Boolean)
+}))
+```
+
+### Comparison
+
+| | Approach A (separate viewer chunk) | Approach B (viewer in main) |
+|---|----------------------------------|-----------------------------|
+| Main bundle size | Smallest | Includes full viewer stack |
+| Vite config | `manualChunks` for viewer deps | No extra Rollup output options |
+| Export plugins | Lazy chunks via `import()` | Lazy chunks via `import()` |
+| Workers / HTML runtime | Static copy to `assets/` | Static copy to `assets/` |
+
+Plugin packages stay normal `dependencies` in `package.json` in both cases — the bundler needs them at build time to emit lazy chunks; they are not inlined into the main entry unless you add top-level static imports.
 
 ### Run export commands
 
@@ -140,10 +243,9 @@ AcApDocManager.instance.sendStringToExecute('csvg')
 
 HTML export embeds `viewer-runtime.iife.js` from `@mlightcad/cad-html-plugin` (not from `cad-simple-viewer`). Copy it next to your workers and set `htmlViewerRuntimeUrl` to that path.
 
-`vite-plugin-static-copy` in `vite.config.ts` copies:
+`vite-plugin-static-copy` (see [Vite configuration](#vite-configuration)) copies:
 
-- `./node_modules/@mlightcad/data-model/dist/dxf-parser-worker.js` → `assets/`
-- `./node_modules/@mlightcad/cad-simple-viewer/dist/*-worker.js` → `assets/`
+- `./node_modules/@mlightcad/cad-simple-viewer/dist/*-worker.js` → `assets/` (DXF/DWG parsers, mtext renderer, etc.)
 - `./node_modules/@mlightcad/cad-html-plugin/dist/viewer-runtime.iife.js` → `assets/`
 
 If `viewer-runtime.iife.js` is missing or the URL is wrong, the dev server may return `index.html` instead and the exported HTML will fail with `Unexpected token '<'`.
@@ -200,7 +302,7 @@ await AcApDocManager.instance.openDocument(file.name, fileContent, options)
 | Custom commands | `commandManager.addCommand(...)` — see `src/ellipseCmd.ts` |
 | Lazy plugins | `pluginManager.registerLazyPlugin({ name, triggers, loader })` with dynamic `import()` |
 | Export UI | `sendStringToExecute('chtml' \| 'cpdf' \| 'csvg')` |
-| Workers & assets | `webworkerFileUrls`, static copy in Vite |
+| Workers & assets | `webworkerFileUrls`, static copy in Vite (see [Vite configuration](#vite-configuration)) |
 
 Lazy initialization: `AcApDocManager` is created on first file open or **New**, not at page load.
 
@@ -212,7 +314,7 @@ Lazy initialization: `AcApDocManager` is created on first file open or **New**, 
 | `src/main.ts` | `CadViewerApp` — viewer, plugins, export buttons |
 | `src/ellipseCmd.ts` | Custom `ellipsedemo` command |
 | `src/docCreator.ts` | Sample drawing factory for **New** |
-| `vite.config.ts` | `base: './'`, `modulePreload: false`, copies workers + `viewer-runtime.iife.js` |
+| `vite.config.ts` | Approach A: `manualChunks` for viewer stack, `modulePreload: false`, static copy of workers + `viewer-runtime.iife.js` |
 
 ## Beyond a viewer
 
