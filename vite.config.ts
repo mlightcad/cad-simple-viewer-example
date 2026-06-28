@@ -7,7 +7,8 @@ import { viteStaticCopy } from 'vite-plugin-static-copy'
 const VIEWER_STACK =
   /\/(cad-simple-viewer|three-renderer|data-model|geometry-engine)\//
 
-export default defineConfig(({ mode }) => ({  base: './',
+export default defineConfig(({ mode }) => ({
+  base: './',
   build: {
     modulePreload: false,
     rollupOptions: {

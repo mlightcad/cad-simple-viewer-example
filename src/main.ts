@@ -1,18 +1,15 @@
-import { AcApDocManager, AcEdCommandStack } from '@mlightcad/cad-simple-viewer'
-import { AcDbOpenDatabaseOptions } from '@mlightcad/data-model'
-import { DocCreator } from './docCreator'
+import {
+  AcApDocManager,
+  AcApOpenViewMode,
+  AcEdCommandStack,
+  AcEdOpenMode,
+  applyUiTheme,
+  type AcApOpenDatabaseOptions
+} from '@mlightcad/cad-simple-viewer'
 import { AcApEllipseCmd } from './ellipseCmd'
 import { initializeLocale } from './i8n'
-
-/**
- * Plugin export command names registered by the official HTML, PDF, and SVG packages.
- *
- * These strings are passed to {@link AcApDocManager.sendStringToExecute} and also serve
- * as lazy-load triggers for their respective plugins.
- *
- * @see https://github.com/mlightcad/cad-viewer/wiki/Plugin-System
- */
-type ExportCommandName = 'chtml' | 'cpdf' | 'csvg'
+import { registerPlugins } from './register'
+import { WEBWORKER_FILE_URLS } from './workerConfig'
 
 /**
  * Toast notification severity used by {@link CadViewerApp.showMessage}.
@@ -20,16 +17,37 @@ type ExportCommandName = 'chtml' | 'cpdf' | 'csvg'
 type MessageType = 'success' | 'error' | 'info'
 
 /**
+ * Upload-screen value for initial view when the user leaves the choice on **Auto**.
+ */
+type OpenViewModeChoice = 'auto' | AcApOpenViewMode
+
+/**
+ * Open options collected from the upload screen before a file is loaded.
+ */
+interface OpenOptions {
+  /** Database access mode passed to {@link AcApOpenDatabaseOptions.mode}. */
+  mode: AcEdOpenMode
+  /** Whether MTEXT is rendered on the main thread (fixed after first {@link CadViewerApp.initialize}). */
+  useMainThreadDraw: boolean
+  /** Whether non-plottable layers are drawn ({@link AcApOpenDatabaseOptions.drawNoPlotLayers}). */
+  drawNoPlotLayers: boolean
+  /** Whether geometry is shown incrementally while the file converts. */
+  progressiveRendering: boolean
+  /** How the view is framed after open; omitted when the user selects **Auto**. */
+  openViewMode?: AcApOpenViewMode
+}
+
+/**
  * Application shell that wires the example HTML UI to `AcApDocManager`.
  *
  * Responsibilities:
- * - Lazy-initialize the CAD viewer on first user action (open file or new drawing)
- * - Register demo commands and lazy export plugins (HTML / PDF / SVG)
- * - Handle local DXF/DWG file open, sample drawing creation, and export toolbar actions
- * - Reflect document state in the DOM (toolbar position, export button visibility)
+ * - Lazy-initialize the CAD viewer on first file open
+ * - Register demo commands, lazy export plugins (HTML / PDF / SVG), and the simple UI plugin
+ * - Handle local DXF/DWG file open with configurable open options
+ * - Reflect document state in the DOM (upload screen vs viewer)
  *
  * The viewer is not created at construction time; call {@link CadViewerApp.initialize}
- * indirectly via file open or **New** so the initial page load stays lightweight.
+ * indirectly via file open so the initial page load stays lightweight.
  *
  * @example
  * ```typescript
@@ -45,88 +63,176 @@ class CadViewerApp {
   private container: HTMLDivElement
 
   /**
-   * Hidden `<input type="file">` used by the **Open** FAB to pick local `.dxf` / `.dwg` files.
+   * Viewer pane that hosts the CAD canvas and simple UI plugin overlays.
+   * Corresponds to `#viewerPane` in `index.html`.
+   */
+  private viewerPane: HTMLElement
+
+  /**
+   * Full-screen upload overlay shown before a drawing is opened.
+   * Corresponds to `#uploadScreen` in `index.html`.
+   */
+  private uploadScreen: HTMLElement
+
+  /**
+   * Click/drop target inside the upload panel that triggers the hidden file input.
+   * Corresponds to `#uploadDropzone` in `index.html`.
+   */
+  private uploadDropzone: HTMLElement
+
+  /**
+   * Hidden `<input type="file">` used to pick local `.dxf` / `.dwg` files.
    * Corresponds to `#fileInputElement`.
    */
   private fileInput: HTMLInputElement
 
   /**
-   * Wrapper around the **Open** FAB and label (`#openButtonContainer`).
-   * Hidden while a file is loading; see `loading-file` on `#fileInputContainer`.
+   * Compact **Open** control shown in the viewer corner after a file loads successfully.
+   * Corresponds to `#reopenButton` in `index.html`.
    */
-  private openButtonContainer: HTMLElement
+  private reopenButton: HTMLButtonElement
 
   /**
-   * Wrapper around the **New** FAB and label (`#newButtonContainer`).
-   * Hidden during file load and permanently after a successful open or new drawing.
+   * Hint text under the text-rendering option group.
+   * Corresponds to `#textRenderingHint` in `index.html`.
    */
-  private newButtonContainer: HTMLElement
+  private textRenderingHint: HTMLElement
 
   /**
-   * **New** button that populates the current document with {@link DocCreator} sample geometry.
-   * Hidden after the first new drawing or file open via {@link CadViewerApp.hideNewButton}.
+   * Hint text under the progressive-rendering option group.
+   * Corresponds to `#progressiveRenderingHint` in `index.html`.
    */
-  private newDrawingButton: HTMLButtonElement
+  private progressiveRenderingHint: HTMLElement
 
   /**
-   * Toolbar control that runs the `chtml` command (lazy HTML export plugin).
-   * Visible only after a file is opened successfully; see `show-export` in `index.html`.
+   * Hint text under the non-plottable-layers option group.
+   * Corresponds to `#noPlotLayersHint` in `index.html`.
    */
-  private exportHtmlButton: HTMLButtonElement
-
-  /**
-   * Toolbar control that runs the `cpdf` command (lazy PDF export plugin).
-   */
-  private exportPdfButton: HTMLButtonElement
-
-  /**
-   * Toolbar control that runs the `csvg` command (lazy SVG export plugin).
-   */
-  private exportSvgButton: HTMLButtonElement
+  private noPlotLayersHint: HTMLElement
 
   /**
    * Whether {@link AcApDocManager.createInstance} has completed for this page session.
-   * Stays false until the user opens a file or clicks **New**.
+   * Stays false until the user opens a file for the first time.
    */
   private isInitialized: boolean = false
 
   /**
-   * Whether a DXF/DWG file was opened successfully in this session.
-   *
-   * When true, export commands are allowed and the export toolbar is shown.
-   * Remains false if the user only created a drawing via **New** (export UI stays hidden).
+   * `useMainThreadDraw` value passed to the first {@link CadViewerApp.initialize} call.
+   * Used to warn when the user changes text rendering after the viewer is already running.
    */
-  private hasLoadedDocument: boolean = false
+  private initUseMainThreadDraw: boolean = false
+
+  /**
+   * Whether the user has opened at least one drawing in this session.
+   * Used to keep the corner **Open** button visible after subsequent opens.
+   */
+  private hasOpenedFile: boolean = false
 
   /**
    * Binds DOM references from `index.html` and registers UI event listeners.
    *
    * Does not initialize the CAD viewer; initialization is deferred until
-   * {@link CadViewerApp.loadFile} or the **New** button handler runs.
+   * {@link CadViewerApp.loadFile} runs.
    */
   constructor() {
     this.container = document.getElementById('cad-container') as HTMLDivElement
+    this.viewerPane = document.getElementById('viewerPane') as HTMLElement
+    this.uploadScreen = document.getElementById('uploadScreen') as HTMLElement
+    this.uploadDropzone = document.getElementById('uploadDropzone') as HTMLElement
     this.fileInput = document.getElementById('fileInputElement') as HTMLInputElement
-    this.openButtonContainer = document.getElementById(
-      'openButtonContainer'
+    this.reopenButton = document.getElementById('reopenButton') as HTMLButtonElement
+    this.textRenderingHint = document.getElementById('textRenderingHint') as HTMLElement
+    this.progressiveRenderingHint = document.getElementById(
+      'progressiveRenderingHint'
     ) as HTMLElement
-    this.newButtonContainer = document.getElementById(
-      'newButtonContainer'
-    ) as HTMLElement
-    this.newDrawingButton = document.getElementById('newDrawingButton') as HTMLButtonElement
-    this.exportHtmlButton = document.getElementById(
-      'exportHtmlButton'
-    ) as HTMLButtonElement
-    this.exportPdfButton = document.getElementById(
-      'exportPdfButton'
-    ) as HTMLButtonElement
-    this.exportSvgButton = document.getElementById(
-      'exportSvgButton'
-    ) as HTMLButtonElement
+    this.noPlotLayersHint = document.getElementById('noPlotLayersHint') as HTMLElement
 
+    this.setupOptionGroups()
     this.setupFileHandling()
-    this.setupNewDrawingHandling()
-    this.setupExportHandling()
+    this.setupReopenHandling()
+  }
+
+  /**
+   * Wires click handlers on every `[data-option-group]` segment on the upload screen.
+   *
+   * Toggles the `is-active` class and `aria-checked` on the clicked option and
+   * refreshes the descriptive hint for that group.
+   */
+  private setupOptionGroups(): void {
+    document.querySelectorAll('[data-option-group]').forEach(group => {
+      group.addEventListener('click', event => {
+        const target = (event.target as HTMLElement).closest<HTMLButtonElement>(
+          'button[data-value]'
+        )
+        if (!target || !group.contains(target)) {
+          return
+        }
+
+        group.querySelectorAll('button[data-value]').forEach(button => {
+          const isActive = button === target
+          button.classList.toggle('is-active', isActive)
+          button.setAttribute('aria-checked', String(isActive))
+        })
+
+        this.updateOptionHints(group.getAttribute('data-option-group'))
+      })
+    })
+  }
+
+  /**
+   * Updates the helper text below an open-option group after the user changes a choice.
+   *
+   * @param groupName - Value of `data-option-group` (`textRendering`, `progressiveRendering`, or `noPlotLayers`)
+   */
+  private updateOptionHints(groupName: string | null): void {
+    if (groupName === 'textRendering') {
+      const useMain = this.getSelectedValue('textRendering') === 'main'
+      this.textRenderingHint.textContent = useMain
+        ? 'Slower, less memory'
+        : 'Faster, more memory'
+    } else if (groupName === 'progressiveRendering') {
+      const enabled = this.getSelectedValue('progressiveRendering') === 'true'
+      this.progressiveRenderingHint.textContent = enabled
+        ? 'Show geometry while loading'
+        : 'Wait until fully converted'
+    } else if (groupName === 'noPlotLayers') {
+      const show = this.getSelectedValue('noPlotLayers') === 'true'
+      this.noPlotLayersHint.textContent = show
+        ? 'AutoCAD editor semantics'
+        : 'Web viewer default'
+    }
+  }
+
+  /**
+   * Returns the `data-value` of the active button inside an open-option group.
+   *
+   * @param groupName - Value of `data-option-group` on the segment container
+   * @returns Selected option value, or an empty string when nothing is active
+   */
+  private getSelectedValue(groupName: string): string {
+    const active = document.querySelector(
+      `[data-option-group="${groupName}"] button.is-active`
+    ) as HTMLButtonElement | null
+    return active?.dataset.value ?? ''
+  }
+
+  /**
+   * Reads the current upload-screen choices into an {@link OpenOptions} object.
+   *
+   * @returns Options applied on the next {@link CadViewerApp.loadFile} call
+   */
+  private readOpenOptions(): OpenOptions {
+    const openViewChoice = this.getSelectedValue('openViewMode') as OpenViewModeChoice
+    const openViewMode =
+      openViewChoice === 'auto' ? undefined : (openViewChoice as AcApOpenViewMode)
+
+    return {
+      mode: Number(this.getSelectedValue('accessMode')) as AcEdOpenMode,
+      useMainThreadDraw: this.getSelectedValue('textRendering') === 'main',
+      drawNoPlotLayers: this.getSelectedValue('noPlotLayers') === 'true',
+      progressiveRendering: this.getSelectedValue('progressiveRendering') === 'true',
+      openViewMode
+    }
   }
 
   /**
@@ -134,42 +240,85 @@ class CadViewerApp {
    *
    * Configuration highlights:
    * - `webworkerFileUrls` — parser and MTEXT worker scripts copied to `dist/assets/`
+   * - `checkWorkersOnInit` — probe worker URLs after registration (see {@link WEBWORKER_FILE_URLS})
    * - `htmlViewerRuntimeUrl` — runtime bundle required for offline HTML export (`chtml`)
    * - `baseUrl` — optional CDN root for built-in resources (demo override)
+   * - `useMainThreadDraw` — MTEXT render mode; fixed for the lifetime of the page session
+   *
+   * Before `createInstance`, {@link AcApDocManager.checkWebworkerReadiness} verifies
+   * that worker scripts respond without downloading large bundles (HEAD + ranged GET fallback).
    *
    * Idempotent: subsequent calls are no-ops once {@link CadViewerApp.isInitialized} is true.
    *
+   * @param useMainThreadDraw - When `true`, MTEXT is rendered on the main thread instead of a worker
+   * @returns `true` when the viewer is ready; `false` when worker checks or init failed
    * @remarks On failure, logs to the console and shows an error toast via {@link CadViewerApp.showMessage}.
    */
-  private initialize(): void {
-    if (!this.isInitialized) {
-      try {
-        AcApDocManager.createInstance({
-          container: this.container,
-          autoResize: true,
-          baseUrl: 'https://cdn.jsdelivr.net/gh/mlightcad/cad-data@main/',
-          webworkerFileUrls: {
-            mtextRender: './assets/mtext-renderer-worker.js',
-            dxfParser: './assets/dxf-parser-worker.js',
-            dwgParser: './assets/libredwg-parser-worker.js'
-          },
-          htmlViewerRuntimeUrl: './assets/viewer-runtime.iife.js'
-        })
-        initializeLocale()
-        this.registerCommands()
-        this.registerLazyPlugins()
+  private async initialize(useMainThreadDraw: boolean): Promise<boolean> {
+    if (this.isInitialized) {
+      return true
+    }
 
-        AcApDocManager.instance.events.documentActivated.addEventListener(
-          args => {
-            document.title = args.doc.docTitle
-          }
+    try {
+      applyUiTheme('dark', this.viewerPane)
+
+      const workersReachable = await AcApDocManager.checkWebworkerReadiness(
+        WEBWORKER_FILE_URLS
+      )
+      if (!workersReachable) {
+        console.error(
+          'CAD worker scripts are missing or blocked:',
+          WEBWORKER_FILE_URLS
         )
-
-        this.isInitialized = true
-      } catch (error) {
-        console.error('Failed to initialize CAD viewer:', error)
-        this.showMessage('Failed to initialize CAD viewer', 'error')
+        this.showMessage(
+          'CAD worker scripts are missing. Ensure parser workers are deployed to assets/.',
+          'error'
+        )
+        return false
       }
+
+      AcApDocManager.createInstance({
+        container: this.container,
+        busyIndicatorHost: this.viewerPane,
+        autoResize: true,
+        baseUrl: 'https://cdn.jsdelivr.net/gh/mlightcad/cad-data@main/',
+        webworkerFileUrls: WEBWORKER_FILE_URLS,
+        checkWorkersOnInit: true,
+        useMainThreadDraw,
+        htmlViewerRuntimeUrl: './assets/viewer-runtime.iife.js'
+      })
+
+      const docManager = AcApDocManager.instance
+
+      docManager.events.workersReady.addEventListener(({ ready }) => {
+        if (!ready) {
+          console.error('CAD worker scripts are not reachable')
+          this.showMessage('CAD worker scripts are not reachable', 'error')
+        }
+      })
+
+      docManager.events.documentToBeOpened.addEventListener(() => {
+        this.setUploadLoading(true)
+      })
+
+      initializeLocale()
+      this.registerCommands()
+      await registerPlugins(this.viewerPane)
+
+      docManager.events.documentActivated.addEventListener(args => {
+        document.title = args.doc.docTitle
+        if (this.hasOpenedFile) {
+          this.showReopenButton()
+        }
+      })
+
+      this.isInitialized = true
+      this.initUseMainThreadDraw = useMainThreadDraw
+      return true
+    } catch (error) {
+      console.error('Failed to initialize CAD viewer:', error)
+      this.showMessage('Failed to initialize CAD viewer', 'error')
+      return false
     }
   }
 
@@ -191,59 +340,40 @@ class CadViewerApp {
   }
 
   /**
-   * Registers lazy export plugins on `AcApDocManager.instance.pluginManager`.
+   * Attaches drag-and-drop, keyboard, and `change` listeners for local file open.
    *
-   * Plugin code is not downloaded until the user runs a trigger command:
-   *
-   * | Package | Trigger commands |
-   * |---------|------------------|
-   * | `@mlightcad/cad-html-plugin` | `chtml` |
-   * | `@mlightcad/cad-pdf-plugin` | `cpdf`, `ipdf` |
-   * | `@mlightcad/cad-svg-plugin` | `csvg` |
-   *
-   * Loaders use dynamic `import()` so plugin bundles stay out of the main chunk.
-   *
-   * Safe to call only once per application lifetime (guarded by {@link CadViewerApp.initialize}).
-   *
-   * @see https://github.com/mlightcad/cad-viewer/wiki/Plugin-System
-   */
-  private registerLazyPlugins(): void {
-    const pluginManager = AcApDocManager.instance.pluginManager
-
-    pluginManager.registerLazyPlugin({
-      name: 'HtmlPlugin',
-      triggers: ['chtml'],
-      loader: async () => {
-        const { createHtmlPlugin } = await import('@mlightcad/cad-html-plugin')
-        return createHtmlPlugin()
-      }
-    })
-
-    pluginManager.registerLazyPlugin({
-      name: 'PdfPlugin',
-      triggers: ['cpdf', 'ipdf'],
-      loader: async () => {
-        const { createPdfPlugin } = await import('@mlightcad/cad-pdf-plugin')
-        return createPdfPlugin()
-      }
-    })
-
-    pluginManager.registerLazyPlugin({
-      name: 'SvgPlugin',
-      triggers: ['csvg'],
-      loader: async () => {
-        const { createSvgPlugin } = await import('@mlightcad/cad-svg-plugin')
-        return createSvgPlugin()
-      }
-    })
-  }
-
-  /**
-   * Attaches a `change` listener to the hidden file input for local DXF/DWG open.
-   *
-   * Clears the input value after each selection so the same file can be chosen again.
+   * Clears the hidden file input value after each selection so the same file can be chosen again.
    */
   private setupFileHandling(): void {
+    this.uploadDropzone.addEventListener('click', () => {
+      this.fileInput.click()
+    })
+
+    this.uploadDropzone.addEventListener('keydown', event => {
+      if (event.key === 'Enter' || event.key === ' ') {
+        event.preventDefault()
+        this.fileInput.click()
+      }
+    })
+
+    this.uploadDropzone.addEventListener('dragover', event => {
+      event.preventDefault()
+      this.uploadDropzone.classList.add('is-dragover')
+    })
+
+    this.uploadDropzone.addEventListener('dragleave', () => {
+      this.uploadDropzone.classList.remove('is-dragover')
+    })
+
+    this.uploadDropzone.addEventListener('drop', event => {
+      event.preventDefault()
+      this.uploadDropzone.classList.remove('is-dragover')
+      const file = event.dataTransfer?.files?.[0]
+      if (file) {
+        void this.loadFile(file)
+      }
+    })
+
     this.fileInput.addEventListener('change', event => {
       const file = (event.target as HTMLInputElement).files?.[0]
       if (file) {
@@ -254,138 +384,83 @@ class CadViewerApp {
   }
 
   /**
-   * Hides **Open** and **New** while a DXF/DWG file is being read and opened.
-   *
-   * Toggles the `loading-file` class on `#fileInputContainer` (see `index.html` CSS).
+   * Runs the built-in **OPEN** command when the corner **Open** button is clicked.
    */
-  private setFileLoadingUi(loading: boolean): void {
-    const fileInputContainer = document.getElementById('fileInputContainer')
-    fileInputContainer?.classList.toggle('loading-file', loading)
-  }
-
-  /**
-   * Hides the **New** entry control after the user has started a session.
-   *
-   * Called after a successful file open or after creating the sample drawing.
-   */
-  private hideNewButton(): void {
-    this.newButtonContainer.style.display = 'none'
-  }
-
-  /**
-   * Restores **Open** and **New** on the home screen after a failed file open.
-   */
-  private restoreEntryButtons(): void {
-    this.openButtonContainer.style.display = ''
-    this.newButtonContainer.style.display = ''
-  }
-
-  /**
-   * Wires click handlers on the HTML / PDF / SVG export toolbar buttons.
-   *
-   * Each handler delegates to {@link CadViewerApp.runExportCommand} with the
-   * matching plugin trigger command name.
-   */
-  private setupExportHandling(): void {
-    this.exportHtmlButton.addEventListener('click', () => {
-      this.runExportCommand('chtml')
-    })
-    this.exportPdfButton.addEventListener('click', () => {
-      this.runExportCommand('cpdf')
-    })
-    this.exportSvgButton.addEventListener('click', () => {
-      this.runExportCommand('csvg')
-    })
-  }
-
-  /**
-   * Executes an export plugin command if the viewer and a opened file are ready.
-   *
-   * `sendStringToExecute` loads the matching lazy plugin on first use when needed.
-   *
-   * @param command - Plugin trigger: `chtml`, `cpdf`, or `csvg`
-   */
-  private runExportCommand(command: ExportCommandName): void {
-    if (!this.hasLoadedDocument || !this.isInitialized) {
-      return
-    }
-    AcApDocManager.instance.sendStringToExecute(command)
-  }
-
-  /**
-   * Updates UI state after a local DXF/DWG file is opened successfully.
-   *
-   * - Sets {@link CadViewerApp.hasLoadedDocument} to true
-   * - Adds `loaded` and `show-export` classes on `#fileInputContainer` (toolbar layout + export buttons)
-   * - Enables export FABs via {@link CadViewerApp.updateExportButtonsState}
-   */
-  private onFileOpened(): void {
-    this.hasLoadedDocument = true
-    const fileInputContainer = document.getElementById('fileInputContainer')
-    if (fileInputContainer) {
-      fileInputContainer.classList.add('loaded', 'show-export')
-    }
-    this.updateExportButtonsState()
-  }
-
-  /**
-   * Syncs the `disabled` attribute on export buttons with viewer and document readiness.
-   *
-   * Export actions require both {@link CadViewerApp.isInitialized} and
-   * {@link CadViewerApp.hasLoadedDocument}.
-   */
-  private updateExportButtonsState(): void {
-    const enabled = this.hasLoadedDocument && this.isInitialized
-    this.exportHtmlButton.disabled = !enabled
-    this.exportPdfButton.disabled = !enabled
-    this.exportSvgButton.disabled = !enabled
-  }
-
-  /**
-   * Handles **New** — fills the active document with {@link DocCreator.createExampleDoc2}
-   * and fits the view.
-   *
-   * Does not show export buttons (no `show-export` class); only file open does.
-   * Moves the FAB toolbar to the corner via the `loaded` class on `#fileInputContainer`.
-   */
-  private setupNewDrawingHandling(): void {
-    this.newDrawingButton.addEventListener('click', () => {
-      this.initialize()
-      const docManager = AcApDocManager.instance
-      if (!docManager) {
-        this.showMessage('CAD viewer not initialized', 'error')
+  private setupReopenHandling(): void {
+    this.reopenButton.addEventListener('click', () => {
+      if (!this.isInitialized) {
         return
       }
-      const doc = docManager.curDocument
-      if (doc) {
-        const fileInputContainer = document.getElementById('fileInputContainer')
-        if (fileInputContainer) {
-          fileInputContainer.classList.add('loaded')
-        }
-
-        DocCreator.instance.createExampleDoc2(doc.database)
-        docManager.setActiveLayout()
-        docManager.curView.zoomToFitDrawing()
-
-        this.hideNewButton()
-      }
+      AcApDocManager.instance.sendStringToExecute('open')
     })
+  }
+
+  /**
+   * Hides the upload overlay while a document is opening so the viewer loading indicator is visible.
+   *
+   * Triggered from the `documentToBeOpened` event and when {@link CadViewerApp.loadFile}
+   * begins opening a file.
+   *
+   * @param loading - When `true`, hides the upload screen
+   */
+  private setUploadLoading(loading: boolean): void {
+    if (loading) {
+      this.uploadScreen.classList.add('is-hidden')
+    }
+  }
+
+  /**
+   * Restores the full upload screen (home page) after a failed open from the upload flow.
+   */
+  private showUploadScreen(): void {
+    this.uploadScreen.classList.remove('is-hidden')
+    this.reopenButton.classList.remove('is-visible')
+  }
+
+  /**
+   * Shows the compact corner **Open** button while keeping the upload screen hidden.
+   */
+  private showReopenButton(): void {
+    this.uploadScreen.classList.add('is-hidden')
+    this.reopenButton.classList.add('is-visible')
+  }
+
+  /**
+   * Hides the upload screen and shows the compact corner **Open** button after a successful load.
+   */
+  private hideUploadScreen(): void {
+    this.hasOpenedFile = true
+    this.showReopenButton()
   }
 
   /**
    * Reads a local file, validates extension, and opens it in the viewer.
    *
    * Flow:
-   * 1. {@link CadViewerApp.initialize}
+   * 1. {@link CadViewerApp.readOpenOptions} → {@link CadViewerApp.initialize}
    * 2. Reject non-`.dxf` / non-`.dwg` names with an error toast
-   * 3. Hide **Open** / **New** via {@link CadViewerApp.setFileLoadingUi} until loading finishes
-   * 4. {@link CadViewerApp.readFile} → `openDocument` with read-only options
-   * 5. On success, {@link CadViewerApp.onFileOpened} and a success toast; on failure, {@link CadViewerApp.restoreEntryButtons}
+   * 3. Hide the upload screen via `documentToBeOpened` while the viewer shows its loading indicator
+   * 4. {@link CadViewerApp.readFile} → `openDocument` with upload-screen options
+   * 5. On success, {@link CadViewerApp.hideUploadScreen} and a success toast; on failure, {@link CadViewerApp.showUploadScreen}
    *
-   * @param file - User-selected file from the file input
+   * @param file - User-selected file from the file input or drop zone
    */
   private async loadFile(file: File): Promise<void> {
-    this.initialize()
+    const openOptions = this.readOpenOptions()
+
+    if (
+      this.isInitialized &&
+      openOptions.useMainThreadDraw !== this.initUseMainThreadDraw
+    ) {
+      this.showMessage(
+        'Text rendering mode applies on first load. Reload the page to change it.',
+        'info'
+      )
+    }
+
+    if (!(await this.initialize(openOptions.useMainThreadDraw))) {
+      return
+    }
 
     const fileName = file.name.toLowerCase()
     if (!fileName.endsWith('.dxf') && !fileName.endsWith('.dwg')) {
@@ -394,43 +469,53 @@ class CadViewerApp {
     }
 
     this.clearMessages()
-    this.setFileLoadingUi(true)
 
     try {
-      const fileContent = await this.readFile(file)
-
-      const options: AcDbOpenDatabaseOptions = {
-        minimumChunkSize: 1000,
-        readOnly: true
+      const docManager = AcApDocManager.instance
+      if (!(await docManager.areWorkersReady())) {
+        this.showMessage(
+          'CAD worker scripts are not reachable. Check deployment of assets/*-worker.js.',
+          'error'
+        )
+        return
       }
 
-      const success = await AcApDocManager.instance.openDocument(
+      const fileContent = await this.readFile(file)
+
+      const options: AcApOpenDatabaseOptions = {
+        minimumChunkSize: 1000,
+        mode: openOptions.mode,
+        drawNoPlotLayers: openOptions.drawNoPlotLayers,
+        progressiveRendering: openOptions.progressiveRendering,
+        ...(openOptions.openViewMode != null
+          ? { openViewMode: openOptions.openViewMode }
+          : {})
+      }
+
+      const success = await docManager.openDocument(
         file.name,
         fileContent,
         options
       )
 
       if (success) {
-        this.hideNewButton()
-        this.onFileOpened()
+        this.hideUploadScreen()
         this.showMessage(`Successfully loaded: ${file.name}`, 'success')
       } else {
-        this.restoreEntryButtons()
+        this.showUploadScreen()
         this.showMessage(`Failed to load: ${file.name}`, 'error')
       }
     } catch (error) {
       console.error('Error loading file:', error)
-      this.restoreEntryButtons()
+      this.showUploadScreen()
       this.showMessage(`Error loading file: ${error}`, 'error')
-    } finally {
-      this.setFileLoadingUi(false)
     }
   }
 
   /**
    * Reads a `File` as raw binary via `FileReader.readAsArrayBuffer`.
    *
-   * @param file - Browser `File` object from the file picker
+   * @param file - Browser `File` object from the file picker or drop zone
    * @returns Promise that resolves to the file contents as `ArrayBuffer`
    * @throws Rejects with the `FileReader` error if reading fails
    */
@@ -488,9 +573,7 @@ class CadViewerApp {
     setTimeout(() => {
       popup.style.opacity = '0'
       setTimeout(() => {
-        if (popup.parentNode) {
-          popup.parentNode.removeChild(popup)
-        }
+        popup.parentNode?.removeChild(popup)
       }, 200)
     }, 1000)
   }

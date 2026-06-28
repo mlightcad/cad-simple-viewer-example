@@ -13,141 +13,17 @@
 
       body {
         font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-        background: #f5f5f5;
+        background: #2c2c2c;
         height: 100vh;
         overflow: hidden;
-      }
-
-      .file-input-container {
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        z-index: 10;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        pointer-events: none;
-        transition: all 0.3s ease;
-      }
-      
-      .file-input-container.loaded {
-        top: 2rem;
-        left: 2rem;
-        transform: none;
-      }
-      
-      .file-fab {
-        pointer-events: auto;
-        background: #23272f;
-        color: #e0e0e0;
-        border: none;
-        border-radius: 12px;
-        width: 80px;
-        height: 64px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.18);
-        cursor: pointer;
-        transition: all 0.3s ease;
-        outline: none;
-        padding: 0;
-        position: relative;
-      }
-      
-      .file-input-container.loaded .file-fab {
-        width: 40px;
-        height: 32px;
-      }
-      
-      .file-fab:hover {
-        background: #353b45;
-        box-shadow: 0 4px 16px rgba(0,0,0,0.22);
-      }
-      .file-fab input[type="file"] {
-        display: none;
-      }
-      .file-fab-label {
-        margin-top: 0.5rem;
-        color: #fff;
-        font-size: 1.2rem;
-        text-align: center;
-        text-shadow: 0 1px 4px rgba(0,0,0,0.18);
-        transition: all 0.3s ease;
-      }
-      
-      .file-input-container.loaded .file-fab-label {
-        font-size: 1rem;
-      }
-      
-      .file-icon {
-        transition: all 0.3s ease;
-      }
-      
-      .file-input-container.loaded .file-icon {
-        width: 20px;
-        height: 20px;
-      }
-      
-      .file-fab svg {
-        display: block;
-        margin: 0 auto;
-      }
-      
-      .button-group {
-        display: flex;
-        gap: 1.5rem;
-        align-items: center;
-      }
-      
-      .file-input-container.loaded .button-group {
-        gap: 0.75rem;
-        flex-wrap: wrap;
-        max-width: min(90vw, 520px);
-        justify-content: flex-start;
-      }
-
-      .file-input-container.loading-file .button-container.entry-actions {
-        display: none;
-      }
-
-      /* Must beat .button-container { display: flex } on the same element */
-      .button-container.export-actions {
-        display: none;
-      }
-
-      .file-input-container.show-export .button-container.export-actions {
-        display: flex;
-      }
-
-      .file-fab:disabled {
-        opacity: 0.45;
-        cursor: not-allowed;
-      }
-
-      .file-fab:disabled:hover {
-        background: #23272f;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.18);
-      }
-      
-      .button-container {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-      }
-      
-      .file-input-container.hide {
-        display: none;
       }
 
       .viewer-container {
-        flex: 1;
         position: relative;
-        background: #2c2c2c;
-        overflow: hidden;
         width: 100vw;
         height: 100vh;
+        background: #2c2c2c;
+        overflow: hidden;
       }
 
       #cad-container {
@@ -155,59 +31,481 @@
         height: 100%;
         display: block;
       }
+
+      .upload-screen {
+        position: absolute;
+        inset: 0;
+        z-index: 1000;
+        display: flex;
+        justify-content: center;
+        align-items: safe center;
+        overflow-y: auto;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        padding: 24px;
+        transition: opacity 0.25s ease;
+      }
+
+      .upload-screen.is-hidden {
+        opacity: 0;
+        visibility: hidden;
+        pointer-events: none;
+      }
+
+      .file-upload-container {
+        display: flex;
+        justify-content: center;
+        width: 100%;
+        max-width: 640px;
+        padding: 20px 24px;
+      }
+
+      .upload-panel {
+        display: flex;
+        flex-direction: column;
+        width: 100%;
+        border-radius: 16px;
+        background: #ffffff;
+        box-shadow:
+          0 20px 40px rgba(15, 23, 42, 0.16),
+          0 0 0 1px rgba(255, 255, 255, 0.08);
+        overflow: hidden;
+      }
+
+      .upload-main {
+        padding: 24px 24px 20px;
+      }
+
+      .upload-hero {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        margin-bottom: 16px;
+      }
+
+      .upload-icon {
+        display: flex;
+        flex-shrink: 0;
+        align-items: center;
+        justify-content: center;
+        width: 44px;
+        height: 44px;
+        border-radius: 12px;
+        background: linear-gradient(135deg, #667eea 0%, #5b6fd6 100%);
+        color: #ffffff;
+        box-shadow: 0 6px 16px rgba(102, 126, 234, 0.3);
+      }
+
+      .upload-icon svg {
+        display: block;
+      }
+
+      .upload-title {
+        font-size: 20px;
+        font-weight: 700;
+        letter-spacing: -0.02em;
+        color: #0f172a;
+        line-height: 1.3;
+      }
+
+      .upload-subtitle {
+        margin-top: 4px;
+        font-size: 13px;
+        color: #64748b;
+        line-height: 1.4;
+      }
+
+      .upload-dropzone {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+        padding: 20px 16px;
+        border: 1.5px dashed #c7d2fe;
+        border-radius: 12px;
+        background: #f8faff;
+        cursor: pointer;
+        transition:
+          border-color 0.2s ease,
+          background-color 0.2s ease,
+          box-shadow 0.2s ease,
+          opacity 0.2s ease;
+      }
+
+      .upload-dropzone:hover,
+      .upload-dropzone.is-dragover {
+        border-color: #667eea;
+        background: #f1f5ff;
+        box-shadow: inset 0 0 0 1px rgba(102, 126, 234, 0.08);
+      }
+
+      .dropzone-content {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 4px;
+        pointer-events: none;
+      }
+
+      .dropzone-title {
+        font-size: 14px;
+        font-weight: 600;
+        color: #1e293b;
+      }
+
+      .dropzone-hint {
+        font-size: 13px;
+        color: #64748b;
+      }
+
+      .dropzone-link {
+        color: #667eea;
+        font-weight: 600;
+      }
+
+      .format-tags {
+        display: flex;
+        gap: 6px;
+        margin-top: 8px;
+      }
+
+      .format-tag {
+        padding: 2px 8px;
+        border-radius: 999px;
+        background: #e8edff;
+        color: #4f5fd0;
+        font-size: 10px;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+      }
+
+      .settings-section {
+        padding: 16px 24px 20px;
+        background: #f8fafc;
+        border-top: 1px solid #e8edf5;
+      }
+
+      .settings-title {
+        font-size: 13px;
+        font-weight: 600;
+        color: #334155;
+      }
+
+      .settings-subtitle {
+        margin-top: 2px;
+        font-size: 12px;
+        color: #94a3b8;
+      }
+
+      .settings-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 14px 20px;
+        margin-top: 14px;
+      }
+
+      .setting-block {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }
+
+      .setting-block--full {
+        grid-column: 1 / -1;
+      }
+
+      .setting-label {
+        font-size: 11px;
+        font-weight: 600;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        color: #94a3b8;
+      }
+
+      .setting-hint {
+        font-size: 11px;
+        color: #94a3b8;
+        line-height: 1.35;
+      }
+
+      .mode-segment {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 6px;
+      }
+
+      .mode-option {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 1px;
+        padding: 8px 6px;
+        border: 1.5px solid #e2e8f0;
+        border-radius: 10px;
+        background: #ffffff;
+        cursor: pointer;
+        text-align: center;
+        transition:
+          border-color 0.2s ease,
+          background-color 0.2s ease,
+          box-shadow 0.2s ease;
+      }
+
+      .mode-option:hover {
+        border-color: #c7d2fe;
+        background: #fafbff;
+      }
+
+      .mode-option.is-active {
+        border-color: #667eea;
+        background: #f1f5ff;
+        box-shadow: 0 0 0 1px rgba(102, 126, 234, 0.12);
+      }
+
+      .option-title {
+        font-size: 13px;
+        font-weight: 600;
+        color: #1e293b;
+        line-height: 1.3;
+      }
+
+      .mode-option.is-active .option-title {
+        color: #4f5fd0;
+      }
+
+      .option-desc {
+        font-size: 10px;
+        color: #94a3b8;
+        line-height: 1.3;
+      }
+
+      .mode-option.is-active .option-desc {
+        color: #64748b;
+      }
+
+      .pill-segment {
+        display: flex;
+        border: 1.5px solid #e2e8f0;
+        border-radius: 8px;
+        background: #ffffff;
+        overflow: hidden;
+      }
+
+      .pill-option {
+        flex: 1;
+        padding: 7px 10px;
+        border: none;
+        background: transparent;
+        font-size: 12px;
+        font-weight: 600;
+        color: #64748b;
+        cursor: pointer;
+        text-align: center;
+        transition:
+          background-color 0.15s ease,
+          color 0.15s ease;
+      }
+
+      .pill-option:not(:last-child) {
+        border-right: 1px solid #e2e8f0;
+      }
+
+      .pill-option:hover:not(.is-active) {
+        background: #f8fafc;
+        color: #475569;
+      }
+
+      .pill-option.is-active {
+        background: #f1f5ff;
+        color: #4f5fd0;
+      }
+
+      .reopen-fab {
+        position: absolute;
+        top: 1rem;
+        left: 1rem;
+        z-index: 10;
+        display: none;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.5rem 0.875rem;
+        border: none;
+        border-radius: 10px;
+        background: #23272f;
+        color: #e0e0e0;
+        font-size: 0.875rem;
+        font-weight: 600;
+        cursor: pointer;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.18);
+        transition: background 0.2s ease;
+      }
+
+      .reopen-fab.is-visible {
+        display: flex;
+      }
+
+      .reopen-fab:hover {
+        background: #353b45;
+      }
+
+      .reopen-fab svg {
+        display: block;
+        flex-shrink: 0;
+      }
+
+      #fileInputElement {
+        display: none;
+      }
+
+      @media (max-width: 520px) {
+        .upload-screen {
+          padding: 16px;
+        }
+
+        .file-upload-container {
+          padding: 16px;
+        }
+
+        .upload-main,
+        .settings-section {
+          padding-left: 16px;
+          padding-right: 16px;
+        }
+
+        .settings-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .setting-block--full {
+          grid-column: auto;
+        }
+
+        .mode-segment {
+          grid-template-columns: 1fr;
+        }
+
+        .mode-option {
+          flex-direction: row;
+          justify-content: center;
+          gap: 8px;
+          padding: 10px 12px;
+        }
+      }
     </style>
   </head>
   <body>
-    <div class="viewer-container">
-      <div class="file-input-container" id="fileInputContainer">
-        <div class="button-group">
-          <div class="button-container entry-actions" id="openButtonContainer">
-            <label class="file-fab" id="fileFab">
-              <input type="file" id="fileInputElement" accept=".dxf,.dwg" />
-              <svg width="40" height="40" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" class="file-icon">
-                <path d="M3 6.5V15a1.5 1.5 0 0 0 1.5 1.5h11A1.5 1.5 0 0 0 17 15V7.5A1.5 1.5 0 0 0 15.5 6H7.414a1.5 1.5 0 0 1-1.06-.44l-1.414-1.414A1.5 1.5 0 0 0 4.586 4H4.5A1.5 1.5 0 0 0 3 5.5V6.5z"/>
-                <path d="M8 11v2m0 0v-2m0 2h4m-4 0h4"/>
-              </svg>
-            </label>
-            <div class="file-fab-label">Open</div>
-          </div>
-          <div class="button-container entry-actions" id="newButtonContainer">
-            <button class="file-fab" id="newDrawingButton">
-              <svg width="40" height="40" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" class="file-icon">
-                <path d="M10 3v14M3 10h14"/>
-              </svg>
-            </button>
-            <div class="file-fab-label">New</div>
-          </div>
-          <div class="button-container export-actions">
-            <button class="file-fab" id="exportHtmlButton" type="button" disabled title="Export HTML (chtml)">
-              <svg width="40" height="40" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" class="file-icon">
-                <path d="M4 4h12v12H4z"/>
-                <path d="M7 8h6M7 11h4"/>
-              </svg>
-            </button>
-            <div class="file-fab-label">HTML</div>
-          </div>
-          <div class="button-container export-actions">
-            <button class="file-fab" id="exportPdfButton" type="button" disabled title="Export PDF (cpdf)">
-              <svg width="40" height="40" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" class="file-icon">
-                <path d="M5 4h7l3 3v9H5z"/>
-                <path d="M12 4v3h3"/>
-              </svg>
-            </button>
-            <div class="file-fab-label">PDF</div>
-          </div>
-          <div class="button-container export-actions">
-            <button class="file-fab" id="exportSvgButton" type="button" disabled title="Export SVG (csvg)">
-              <svg width="40" height="40" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" class="file-icon">
-                <path d="M4 6h12v8H4z"/>
-                <path d="M7 9l2 2 4-4"/>
-              </svg>
-            </button>
-            <div class="file-fab-label">SVG</div>
+    <div class="viewer-container" id="viewerPane">
+      <div class="upload-screen" id="uploadScreen">
+        <div class="file-upload-container">
+          <div class="upload-panel">
+            <div class="upload-main">
+              <section class="upload-hero">
+                <div class="upload-icon" aria-hidden="true">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M11 16V7.85l-2.6 2.6L7 9.05 12 4l5 5.05-1.4 1.4L13 7.85V16h-2zm-5 4q-.825 0-1.412-.587T4 18V6q0-.825.588-1.412T6 4h12q.825 0 1.413.588T20 6v12q0 .825-.587 1.413T18 22H6z"/>
+                  </svg>
+                </div>
+                <div>
+                  <h1 class="upload-title">Select CAD File to View</h1>
+                  <p class="upload-subtitle">Import DWG or DXF drawings into the viewer</p>
+                </div>
+              </section>
+
+              <div class="upload-dropzone" id="uploadDropzone" role="button" tabindex="0">
+                <div class="dropzone-content">
+                  <p class="dropzone-title">Drop your file here</p>
+                  <p class="dropzone-hint">or <span class="dropzone-link">browse files</span></p>
+                  <div class="format-tags">
+                    <span class="format-tag">DWG</span>
+                    <span class="format-tag">DXF</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <section class="settings-section">
+              <header>
+                <h2 class="settings-title">Open options</h2>
+                <p class="settings-subtitle">Applied when the file is loaded</p>
+              </header>
+
+              <div class="settings-grid">
+                <div class="setting-block setting-block--full">
+                  <h3 class="setting-label">Initial view</h3>
+                  <div class="mode-segment" data-option-group="openViewMode" role="radiogroup" aria-label="Initial view">
+                    <button type="button" class="mode-option is-active" data-value="auto" role="radio" aria-checked="true">
+                      <span class="option-title">Auto</span>
+                      <span class="option-desc">Based on access mode</span>
+                    </button>
+                    <button type="button" class="mode-option" data-value="extents" role="radio" aria-checked="false">
+                      <span class="option-title">Extents</span>
+                      <span class="option-desc">Fit drawing</span>
+                    </button>
+                    <button type="button" class="mode-option" data-value="saved" role="radio" aria-checked="false">
+                      <span class="option-title">Saved</span>
+                      <span class="option-desc">AutoCAD saved view</span>
+                    </button>
+                  </div>
+                </div>
+
+                <div class="setting-block setting-block--full">
+                  <h3 class="setting-label">Access mode</h3>
+                  <div class="mode-segment" data-option-group="accessMode" role="radiogroup" aria-label="Access mode">
+                    <button type="button" class="mode-option" data-value="0" role="radio" aria-checked="false">
+                      <span class="option-title">Read</span>
+                      <span class="option-desc">View only</span>
+                    </button>
+                    <button type="button" class="mode-option" data-value="4" role="radio" aria-checked="false">
+                      <span class="option-title">Review</span>
+                      <span class="option-desc">View &amp; review</span>
+                    </button>
+                    <button type="button" class="mode-option is-active" data-value="8" role="radio" aria-checked="true">
+                      <span class="option-title">Write</span>
+                      <span class="option-desc">Full access</span>
+                    </button>
+                  </div>
+                </div>
+
+                <div class="setting-block">
+                  <h3 class="setting-label">Text rendering</h3>
+                  <div class="pill-segment" data-option-group="textRendering" role="radiogroup" aria-label="Text rendering">
+                    <button type="button" class="pill-option is-active" data-value="worker" role="radio" aria-checked="true">Web worker</button>
+                    <button type="button" class="pill-option" data-value="main" role="radio" aria-checked="false">Main thread</button>
+                  </div>
+                  <p class="setting-hint" id="textRenderingHint">Faster, more memory</p>
+                </div>
+
+                <div class="setting-block">
+                  <h3 class="setting-label">Progressive rendering</h3>
+                  <div class="pill-segment" data-option-group="progressiveRendering" role="radiogroup" aria-label="Progressive rendering">
+                    <button type="button" class="pill-option" data-value="true" role="radio" aria-checked="false">Enabled</button>
+                    <button type="button" class="pill-option is-active" data-value="false" role="radio" aria-checked="false">Disabled</button>
+                  </div>
+                  <p class="setting-hint" id="progressiveRenderingHint">Wait until fully converted</p>
+                </div>
+
+                <div class="setting-block">
+                  <h3 class="setting-label">Non-plottable layers</h3>
+                  <div class="pill-segment" data-option-group="noPlotLayers" role="radiogroup" aria-label="Non-plottable layers">
+                    <button type="button" class="pill-option is-active" data-value="false" role="radio" aria-checked="true">Hide</button>
+                    <button type="button" class="pill-option" data-value="true" role="radio" aria-checked="false">Show</button>
+                  </div>
+                  <p class="setting-hint" id="noPlotLayersHint">Web viewer default</p>
+                </div>
+              </div>
+            </section>
           </div>
         </div>
       </div>
+
+      <button type="button" class="reopen-fab" id="reopenButton" aria-label="Open another file">
+        <svg width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M3 6.5V15a1.5 1.5 0 0 0 1.5 1.5h11A1.5 1.5 0 0 0 17 15V7.5A1.5 1.5 0 0 0 15.5 6H7.414a1.5 1.5 0 0 1-1.06-.44l-1.414-1.414A1.5 1.5 0 0 0 4.586 4H4.5A1.5 1.5 0 0 0 3 5.5V6.5z"/>
+          <path d="M8 11v2m0 0v-2m0 2h4m-4 0h4"/>
+        </svg>
+        Open
+      </button>
+
+      <input type="file" id="fileInputElement" accept=".dxf,.dwg" />
       <div id="cad-container"></div>
     </div>
     <script type="module" src="/src/main.ts"></script>
