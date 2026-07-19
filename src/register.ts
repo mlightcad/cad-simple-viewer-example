@@ -39,6 +39,12 @@ export const registerSimpleUi = async (host: HTMLElement): Promise<void> => {
 
   await registerSimpleUiPlugin(AcApDocManager.instance.pluginManager, {
     host,
+    dockPanel: {
+      defaultOpen: false,
+      defaultSide: 'left',
+      defaultHeight: 240,
+      defaultWidth: 280
+    },
     toolbar: {
       placement: 'right',
       items: 'default',

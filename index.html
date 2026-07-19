@@ -20,16 +20,33 @@
 
       .viewer-container {
         position: relative;
+        display: flex;
+        flex-direction: column;
         width: 100vw;
         height: 100vh;
         background: #2c2c2c;
         overflow: hidden;
       }
 
+      /* Dock mount target: canvas parent inside host (required by cad-simple-ui-plugin dock). */
+      .viewer-canvas-area {
+        position: relative;
+        flex: 1;
+        min-height: 0;
+        min-width: 0;
+        overflow: hidden;
+      }
+
       #cad-container {
-        width: 100%;
-        height: 100%;
+        position: absolute;
+        inset: 0;
+        overflow: hidden;
+      }
+
+      #cad-container canvas {
         display: block;
+        max-width: 100%;
+        max-height: 100%;
       }
 
       .upload-screen {
@@ -323,7 +340,7 @@
         position: absolute;
         top: 1rem;
         left: 1rem;
-        z-index: 10;
+        z-index: 50;
         display: none;
         align-items: center;
         gap: 0.5rem;
@@ -505,8 +522,10 @@
         Open
       </button>
 
-      <input type="file" id="fileInputElement" accept=".dxf,.dwg" />
-      <div id="cad-container"></div>
+      <section class="viewer-canvas-area" aria-label="Drawing canvas">
+        <input type="file" id="fileInputElement" accept=".dxf,.dwg" />
+        <div id="cad-container"></div>
+      </section>
     </div>
     <script type="module" src="/src/main.ts"></script>
   </body>

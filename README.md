@@ -8,7 +8,8 @@ A vanilla TypeScript demo that shows how to embed [`@mlightcad/cad-simple-viewer
 
 - **Local files** — Open `.dxf` / `.dwg` via the file picker
 - **New drawing** — Create a sample drawing with predefined entities (`DocCreator`)
-- **Simple UI toolbar** — View/review tools, layer manager, theme/locale toggles, and export submenu via `cad-simple-ui-plugin`
+- **Simple UI toolbar** — View/review tools, theme/locale toggles, and export submenu via `cad-simple-ui-plugin`
+- **Layer Manager dock** — Toolbar **Layer Manager** opens a Chrome DevTools-style dock panel (layers tab) beside the canvas; the host page must provide a dedicated canvas parent (see [Dock panel host layout](#dock-panel-host-layout))
 - **Custom command** — Demo ellipse command (`ellipsedemo`)
 - **Dynamic export plugins** — HTML (`chtml`), PDF (`cpdf`), SVG (`csvg`) load in separate chunks when triggered from the toolbar export menu
 - **Split viewer bundle** — Default Vite config puts `cad-simple-viewer` in its own chunk so the main entry stays small and the page loads quickly (see [Vite configuration](#vite-configuration))
@@ -77,7 +78,7 @@ To test a failure locally, temporarily rename or omit a worker file under `dist/
 
 1. Start the dev server and open the URL shown in the terminal.
 2. **Open** — Choose a `.dxf` or `.dwg` file, or click **New** to create the sample drawing. The viewer and plugins initialize on first use (not at page load).
-3. After initialization, a collapsible toolbar appears on the right with view tools, layer manager, theme/locale toggles, and an **Export** submenu (HTML, PDF, SVG). Each export dynamically imports its plugin chunk on first use, so the first run may take a moment.
+3. After initialization, a collapsible toolbar appears on the right with view tools, **Layer Manager**, theme/locale toggles, and an **Export** submenu (HTML, PDF, SVG). Click **Layer Manager** to open the dock panel on the left (layers list). Each export dynamically imports its plugin chunk on first use, so the first run may take a moment.
 4. Run the custom ellipse command from the viewer command line: `ellipsedemo`.
 
 Toast messages at the top report success or errors. The window title updates when a document is activated.
@@ -109,6 +110,12 @@ AcApDocManager.createInstance({
 
 await registerSimpleUiPlugin(AcApDocManager.instance.pluginManager, {
   host,
+  dockPanel: {
+    defaultOpen: false,
+    defaultSide: 'left',
+    defaultHeight: 240,
+    defaultWidth: 280
+  },
   toolbar: {
     placement: 'right',
     items: 'default',
@@ -118,6 +125,62 @@ await registerSimpleUiPlugin(AcApDocManager.instance.pluginManager, {
 ```
 
 This example calls `registerPlugins(host)` from `src/register.ts`, which registers lazy export plugins and the simple UI plugin together. See the [cad-simple-ui-plugin README](https://github.com/mlightcad/cad-viewer/tree/main/packages/cad-simple-ui-plugin) for toolbar customization (`items`, `appendItems`, placement, etc.).
+
+### Dock panel host layout
+
+Starting with `cad-simple-ui-plugin` **1.5.8**, the toolbar **Layer Manager** button runs the `layer` command and opens a **dock panel** tab (not a floating popover as in 1.5.7). The dock mounts on the **viewer canvas parent inside `host`**, then uses flex layout so the canvas shrinks when the panel is open.
+
+Give the page a dedicated canvas area under `viewerPane`. Do **not** put full-screen overlays (upload UI, FABs) as direct siblings of `#cad-container` under `host` without a wrapper — otherwise the dock wraps those nodes into its main flex slot and the panel may fail to appear correctly.
+
+```html
+<div id="viewerPane" class="viewer-container">
+  <!-- Optional overlays stay on the host; they are outside the dock mount target -->
+  <div class="upload-screen">...</div>
+  <button type="button" class="reopen-fab">Open</button>
+
+  <!-- Dock mount target = parent of #cad-container -->
+  <section class="viewer-canvas-area">
+    <div id="cad-container"></div>
+  </section>
+</div>
+```
+
+Suggested CSS (matches [`index.html`](./index.html)):
+
+```css
+.viewer-container {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+}
+
+.viewer-canvas-area {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  min-width: 0;
+  overflow: hidden;
+}
+
+#cad-container {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+}
+```
+
+Behavior after a drawing is open:
+
+| Action | Result |
+|--------|--------|
+| Toolbar **Layer Manager** / `sendStringToExecute('layer')` | Opens the dock (or focuses the **Layers** tab) |
+| Dock close button / `layerclose` | Closes the dock panel |
+| Collapse the toolbar | Closes the dock panel |
+
+Override the mount element with `dockPanel.mountTarget` when you need a custom layout.
 
 ## Plugin system (HTML / PDF / SVG export)
 
@@ -350,13 +413,17 @@ Add `cad-simple-ui-plugin` for toolbar chrome. Add export plugin packages only f
 
 ```html
 <body>
-  <div id="viewerPane">
-    <div id="cad-container"></div>
+  <div id="viewerPane" class="viewer-container">
+    <section class="viewer-canvas-area">
+      <div id="cad-container"></div>
+    </section>
   </div>
 </body>
 ```
 
-`viewerPane` is the host for `applyUiTheme`, `busyIndicatorHost`, and the simple UI plugin overlays; `cad-container` is the WebGL canvas parent.
+- `viewerPane` — host for `applyUiTheme`, `busyIndicatorHost`, and the simple UI plugin (`host` option)
+- `.viewer-canvas-area` — parent of the canvas; preferred dock mount target (see [Dock panel host layout](#dock-panel-host-layout))
+- `cad-container` — WebGL / view canvas parent passed to `AcApDocManager.createInstance({ container })`
 
 ### Open a file
 
@@ -381,7 +448,8 @@ await AcApDocManager.instance.openDocument(file.name, fileContent, options)
 |-------|----------------|
 | Document manager | `AcApDocManager.createInstance({ container, busyIndicatorHost, baseUrl, webworkerFileUrls, htmlViewerRuntimeUrl })` |
 | UI theme | `applyUiTheme('dark', host)` before `createInstance` |
-| Simple UI | `registerSimpleUiPlugin` via `src/register.ts` — toolbar, layers, export submenu |
+| Simple UI | `registerSimpleUiPlugin` via `src/register.ts` — toolbar, dock panel / Layer Manager, export submenu |
+| Dock host layout | `#viewerPane` + `.viewer-canvas-area` + `#cad-container` in `index.html` |
 | Local open | `openDocument(name, ArrayBuffer, options)` |
 | Custom commands | `commandManager.addCommand(...)` — see `src/ellipseCmd.ts` |
 | Lazy export plugins | `/register` stubs in `src/register.ts` — HTML, PDF, SVG chunks on first trigger |
@@ -395,7 +463,7 @@ Lazy initialization: `AcApDocManager` is created on first file open or **New**, 
 
 | Path | Role |
 |------|------|
-| `index.html` | Layout, Open/New controls, `viewerPane` + canvas container |
+| `index.html` | Upload UI, `viewerPane` host, `.viewer-canvas-area` dock mount, `#cad-container` |
 | `src/main.ts` | `CadViewerApp` — lazy init, worker readiness checks, file open, new drawing |
 | `src/workerConfig.ts` | Shared `webworkerFileUrls` paths for init and readiness probes |
 | `src/register.ts` | Plugin registration — lazy export plugins + simple UI |
@@ -414,7 +482,7 @@ Lazy initialization: `AcApDocManager` is created on first file open or **New**, 
 
 ## Related packages
 
-- [`@mlightcad/cad-simple-ui-plugin`](https://github.com/mlightcad/cad-viewer/tree/main/packages/cad-simple-ui-plugin) — Framework-agnostic toolbar and layer manager used by this example
+- [`@mlightcad/cad-simple-ui-plugin`](https://github.com/mlightcad/cad-viewer/tree/main/packages/cad-simple-ui-plugin) — Framework-agnostic toolbar and Layer Manager dock panel used by this example
 - [`@mlightcad/cad-viewer`](https://github.com/mlightcad/cad-viewer/tree/main/packages/cad-viewer) — Full Vue UI with built-in lazy plugin registration
 - [`cad-simple-viewer-example` (monorepo)](https://github.com/mlightcad/cad-viewer/tree/main/packages/cad-simple-viewer-example) — Same simple UI plugin with a predefined-file sidebar layout
 
