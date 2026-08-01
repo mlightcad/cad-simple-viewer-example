@@ -239,7 +239,7 @@ class CadViewerApp {
    * Creates the singleton `AcApDocManager` and registers commands, plugins, and listeners.
    *
    * Configuration highlights:
-   * - `webworkerFileUrls` — parser and MTEXT worker scripts copied to `dist/assets/`
+   * - `webworkerFileUrls` — DWG parser and MTEXT worker scripts copied to `dist/assets/`
    * - `checkWorkersOnInit` — probe worker URLs after registration (see {@link WEBWORKER_FILE_URLS})
    * - `htmlViewerRuntimeUrl` — runtime bundle required for offline HTML export (`chtml`)
    * - `baseUrl` — optional CDN root for built-in resources (demo override)
@@ -247,6 +247,7 @@ class CadViewerApp {
    *
    * Before `createInstance`, {@link AcApDocManager.checkWebworkerReadiness} verifies
    * that worker scripts respond without downloading large bundles (HEAD + ranged GET fallback).
+   * DXF parsing uses the built-in converter in `@mlightcad/data-model` and needs no worker file.
    *
    * Idempotent: subsequent calls are no-ops once {@link CadViewerApp.isInitialized} is true.
    *
@@ -271,7 +272,7 @@ class CadViewerApp {
           WEBWORKER_FILE_URLS
         )
         this.showMessage(
-          'CAD worker scripts are missing. Ensure parser workers are deployed to assets/.',
+          'CAD worker scripts are missing. Ensure DWG/MTEXT workers are deployed to assets/.',
           'error'
         )
         return false
