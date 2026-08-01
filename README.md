@@ -28,11 +28,11 @@ pnpm build    # Typecheck + production build
 pnpm preview  # Serve dist/
 ```
 
-The build copies parser workers and `viewer-runtime.iife.js` into `dist/assets/` (see [Vite configuration](#vite-configuration)).
+The build copies DWG/MTEXT workers and `viewer-runtime.iife.js` into `dist/assets/` (see [Vite configuration](#vite-configuration)).
 
 ## Web Worker readiness
 
-DXF/DWG parsing and MTEXT rendering run in separate worker scripts. Host apps must deploy those files and set `webworkerFileUrls` in `AcApDocManager.createInstance()`. Before opening a drawing, verify the workers are reachable — do **not** probe them with a plain GET (the LibreDWG worker alone is ~12 MB).
+DWG parsing and MTEXT rendering run in separate worker scripts. DXF is parsed by the built-in converter in `@mlightcad/data-model` (no separate worker). Host apps must deploy the DWG/MTEXT worker files and set `webworkerFileUrls` in `AcApDocManager.createInstance()`. Before opening a drawing, verify the workers are reachable — do **not** probe them with a plain GET (the LibreDWG worker alone is ~12 MB).
 
 This example centralizes URLs in [`src/workerConfig.ts`](./src/workerConfig.ts) and demonstrates the readiness APIs from [`@mlightcad/cad-simple-viewer`](https://github.com/mlightcad/cad-viewer/tree/main/packages/cad-simple-viewer) in [`src/main.ts`](./src/main.ts):
 
@@ -87,7 +87,7 @@ Toast messages at the top report success or errors. The window title updates whe
 
 | Format | Notes |
 |--------|--------|
-| **DXF** | Parsed in a Web Worker (`dxf-parser-worker.js`) |
+| **DXF** | Built-in converter in `@mlightcad/data-model` (no separate worker) |
 | **DWG** | LibreDWG WebAssembly via `libredwg-parser-worker.js` |
 
 ## Simple UI plugin
@@ -210,7 +210,6 @@ AcApDocManager.createInstance({
   autoResize: true,
   webworkerFileUrls: {
     mtextRender: './assets/mtext-renderer-worker.js',
-    dxfParser: './assets/dxf-parser-worker.js',
     dwgParser: './assets/libredwg-parser-worker.js'
   },
   // Required for HTML export — must match where viewer-runtime.iife.js is served
@@ -258,13 +257,13 @@ To verify code-splitting, run `pnpm analyze` and open `stats.html` — the viewe
 
 ## Vite configuration
 
-Vite controls how `@mlightcad/cad-simple-viewer`, its parser workers, and export plugins land in `dist/`. This repo ships **two supported setups**. Both keep export plugins out of the main bundle via dynamic `import()` in `registerLazyPlugin` loaders; they differ in whether the viewer itself is split into its own chunk.
+Vite controls how `@mlightcad/cad-simple-viewer`, its DWG/MTEXT workers, and export plugins land in `dist/`. This repo ships **two supported setups**. Both keep export plugins out of the main bundle via dynamic `import()` in `registerLazyPlugin` loaders; they differ in whether the viewer itself is split into its own chunk.
 
 Shared settings (both approaches):
 
 - **`base: './'`** — relative asset URLs for static hosting (e.g. GitHub Pages).
 - **`build.modulePreload: false`** — do not inject `<link rel="modulepreload">` for lazy chunks; plugin bundles load only when a trigger command runs.
-- **`vite-plugin-static-copy`** — copy parser workers and `viewer-runtime.iife.js` into `dist/assets/` (required at runtime; not part of the JS bundle graph).
+- **`vite-plugin-static-copy`** — copy DWG/MTEXT workers and `viewer-runtime.iife.js` into `dist/assets/` (required at runtime; not part of the JS bundle graph).
 - **`pnpm analyze`** — `vite build --mode analyze` writes `stats.html` for bundle inspection.
 
 ### Approach A — Viewer in a separate chunk (default in this repo)
@@ -385,7 +384,7 @@ HTML export embeds `viewer-runtime.iife.js` from `@mlightcad/cad-html-plugin` (n
 
 `vite-plugin-static-copy` (see [Vite configuration](#vite-configuration)) copies:
 
-- `./node_modules/@mlightcad/cad-simple-viewer/dist/*-worker.js` → `assets/` (DXF/DWG parsers, mtext renderer, etc.)
+- `./node_modules/@mlightcad/cad-simple-viewer/dist/*-worker.js` → `assets/` (DWG parser, mtext renderer)
 - `./node_modules/@mlightcad/cad-html-plugin/dist/viewer-runtime.iife.js` → `assets/`
 
 If `viewer-runtime.iife.js` is missing or the URL is wrong, the dev server may return `index.html` instead and the exported HTML will fail with `Unexpected token '<'`.
@@ -397,12 +396,12 @@ If `viewer-runtime.iife.js` is missing or the URL is wrong, the dev server may r
 ```json
 {
   "dependencies": {
-    "@mlightcad/cad-simple-viewer": "^1.5.5",
-    "@mlightcad/cad-simple-ui-plugin": "^1.5.5",
-    "@mlightcad/data-model": "^1.8.3",
-    "@mlightcad/cad-html-plugin": "^1.5.5",
-    "@mlightcad/cad-pdf-plugin": "^1.5.5",
-    "@mlightcad/cad-svg-plugin": "^1.5.5"
+    "@mlightcad/cad-simple-viewer": "^1.5.9",
+    "@mlightcad/cad-simple-ui-plugin": "^1.5.9",
+    "@mlightcad/data-model": "^1.12.2",
+    "@mlightcad/cad-html-plugin": "^1.5.9",
+    "@mlightcad/cad-pdf-plugin": "^1.5.9",
+    "@mlightcad/cad-svg-plugin": "^1.5.9"
   }
 }
 ```
