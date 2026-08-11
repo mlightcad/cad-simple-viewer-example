@@ -12,9 +12,19 @@ import { viteStaticCopy } from 'vite-plugin-static-copy'
  * (tight class hierarchy). Keep `mtext-*` / `shx-parser` with `three-renderer`
  * so they are not absorbed into `cad-simple-viewer` and create a circular chunk
  * edge. `three` includes `three/examples/jsm/*`.
+ *
+ * Keep Vite's `__vitePreload` helper out of the viewer chunk. Otherwise Rollup
+ * places it inside `cad-simple-viewer`, and the tiny app entry must statically
+ * import that whole chunk (plus three / data-model) just to call dynamic import.
  */
 function viewerManualChunk(id: string): string | undefined {
   const path = id.replace(/\\/g, '/')
+  if (
+    path.includes('vite/preload-helper') ||
+    path.includes('vite/modulepreload-polyfill')
+  ) {
+    return 'vite-preload'
+  }
   if (
     path.includes('/node_modules/three/') ||
     path.includes('/node_modules/.pnpm/three@')
