@@ -1,13 +1,14 @@
-import {
+import type {
   AcApDocManager,
+  AcApOpenDatabaseOptions,
   AcApOpenViewMode,
-  AcEdCommandStack,
-  AcEdOpenMode,
-  applyUiTheme,
-  type AcApOpenDatabaseOptions
+  AcEdOpenMode
 } from '@mlightcad/cad-simple-viewer'
-import { AcApEllipseCmd } from './ellipseCmd'
-import { initializeLocale } from './i8n'
+import {
+  loadCadSimpleViewer,
+  preloadViewerAppModules,
+  scheduleViewerPreload
+} from './viewerLoader'
 import { WEBWORKER_FILE_URLS } from './workerConfig'
 
 /**
@@ -51,13 +52,14 @@ export interface CadViewerAppOptions {
  * Application shell that wires the example HTML UI to `AcApDocManager`.
  *
  * Responsibilities:
- * - Lazy-initialize the CAD viewer on first file open
+ * - Keep the homepage free of a static `@mlightcad/cad-simple-viewer` import
+ * - Preload viewer JS after first paint, then create the viewer on first file open
  * - Optionally register demo commands, lazy export plugins, and the simple UI plugin
  * - Handle local DXF/DWG file open with configurable open options
  * - Reflect document state in the DOM (upload screen vs viewer)
  *
- * The viewer is not created at construction time; call {@link CadViewerApp.initialize}
- * indirectly via file open so the initial page load stays lightweight.
+ * The viewer package and `AcApDocManager.createInstance` are deferred until needed;
+ * {@link scheduleViewerPreload} warms the module cache in the background.
  */
 export class CadViewerApp {
   /**
@@ -126,10 +128,17 @@ export class CadViewerApp {
   private readonly enablePlugins: boolean
 
   /**
+   * Cached `AcApDocManager` class after the viewer module has been loaded.
+   * Set during {@link CadViewerApp.initialize}.
+   */
+  private DocManager: typeof AcApDocManager | null = null
+
+  /**
    * Binds DOM references from the page HTML and registers UI event listeners.
    *
-   * Does not initialize the CAD viewer; initialization is deferred until
-   * {@link CadViewerApp.loadFile} runs.
+   * Does not load `@mlightcad/cad-simple-viewer` or create the CAD viewer;
+   * schedules a background preload and initializes on first file open /
+   * new drawing.
    *
    * @param options - App options; set `enablePlugins: false` for a bare viewer
    */
@@ -150,6 +159,7 @@ export class CadViewerApp {
     this.setupFileHandling()
     this.setupNewDrawingHandling()
     this.setupReopenHandling()
+    scheduleViewerPreload(this.enablePlugins)
   }
 
   /**
@@ -211,6 +221,9 @@ export class CadViewerApp {
   /**
    * Creates the singleton `AcApDocManager` and registers commands, plugins, and listeners.
    *
+   * Dynamically imports `@mlightcad/cad-simple-viewer` (reusing any background preload)
+   * before calling `createInstance`.
+   *
    * Configuration highlights:
    * - `webworkerFileUrls` — DWG parser and MTEXT worker scripts copied to `dist/assets/`
    * - `checkWorkersOnInit` — probe worker URLs after registration (see {@link WEBWORKER_FILE_URLS})
@@ -236,6 +249,12 @@ export class CadViewerApp {
     }
 
     try {
+      // Prefer the shared preload promise so first open awaits in-flight work
+      await preloadViewerAppModules(this.enablePlugins)
+      const { AcApDocManager, AcEdCommandStack, applyUiTheme } =
+        await loadCadSimpleViewer()
+      this.DocManager = AcApDocManager
+
       applyUiTheme('dark', this.viewerPane)
 
       const workersReachable = await AcApDocManager.checkWebworkerReadiness(
@@ -276,8 +295,9 @@ export class CadViewerApp {
         this.setUploadLoading(true)
       })
 
+      const { initializeLocale } = await import('./i8n')
       initializeLocale()
-      this.registerCommands()
+      await this.registerCommands(AcEdCommandStack)
 
       if (this.enablePlugins) {
         // Dynamic import keeps plugin `/register` stubs out of the bare-viewer entry
@@ -307,16 +327,30 @@ export class CadViewerApp {
    *
    * Currently adds `ellipsedemo` ({@link AcApEllipseCmd}) for interactive ellipse creation.
    *
+   * @param AcEdCommandStack - Command stack class from the loaded viewer module
    * @remarks Must run after {@link CadViewerApp.initialize} so `commandManager` exists.
    */
-  private registerCommands(): void {
-    const register = AcApDocManager.instance.commandManager
+  private async registerCommands(
+    AcEdCommandStack: (typeof import('@mlightcad/cad-simple-viewer'))['AcEdCommandStack']
+  ): Promise<void> {
+    const { AcApEllipseCmd } = await import('./ellipseCmd')
+    const register = this.requireDocManager().instance.commandManager
     register.addCommand(
       AcEdCommandStack.SYSTEMT_COMMAND_GROUP_NAME,
       'ellipsedemo',
       'ellipsedemo',
       new AcApEllipseCmd()
     )
+  }
+
+  /**
+   * Returns the cached `AcApDocManager` class after successful initialization.
+   */
+  private requireDocManager(): typeof AcApDocManager {
+    if (!this.DocManager) {
+      throw new Error('CAD viewer is not initialized')
+    }
+    return this.DocManager
   }
 
   /**
@@ -380,7 +414,7 @@ export class CadViewerApp {
       if (!this.isInitialized) {
         return
       }
-      AcApDocManager.instance.sendStringToExecute('open')
+      this.requireDocManager().instance.sendStringToExecute('open')
     })
   }
 
@@ -417,7 +451,7 @@ export class CadViewerApp {
           : {})
       }
 
-      const success = await AcApDocManager.instance.newDocument(options)
+      const success = await this.requireDocManager().instance.newDocument(options)
 
       if (success) {
         this.hideUploadScreen()
@@ -509,7 +543,7 @@ export class CadViewerApp {
     this.clearMessages()
 
     try {
-      const docManager = AcApDocManager.instance
+      const docManager = this.requireDocManager().instance
       if (!(await docManager.areWorkersReady())) {
         this.showMessage(
           'CAD worker scripts are not reachable. Check deployment of assets/*-worker.js.',
