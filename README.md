@@ -1,18 +1,20 @@
 # CAD Simple Viewer Example
 
-A vanilla TypeScript demo that shows how to embed [`@mlightcad/cad-simple-viewer`](https://github.com/mlightcad/cad-viewer/tree/main/packages/cad-simple-viewer) in a web page: open DXF/DWG files, create a sample drawing, register custom commands, load [`@mlightcad/cad-simple-ui-plugin`](https://github.com/mlightcad/cad-viewer/tree/main/packages/cad-simple-ui-plugin) for toolbar chrome (including export), and dynamically load HTML/PDF/SVG export plugins on first use.
+A vanilla TypeScript **multi-page** demo that shows how to embed [`@mlightcad/cad-simple-viewer`](https://github.com/mlightcad/cad-viewer/tree/main/packages/cad-simple-viewer) in a web page: open DXF/DWG files, register custom commands, optionally load [`@mlightcad/cad-simple-ui-plugin`](https://github.com/mlightcad/cad-viewer/tree/main/packages/cad-simple-ui-plugin) for toolbar chrome (including export), and dynamically load HTML/PDF/SVG export plugins on first use. A second page runs the same viewer **without any plugins** so you can compare configurations.
 
-[**Live demo**](https://mlightcad.github.io/cad-simple-viewer-example/)
+[**Live demo**](https://mlightcad.github.io/cad-simple-viewer-example/) · [**Without plugins**](https://mlightcad.github.io/cad-simple-viewer-example/no-plugin.html)
 
 ## Features
 
+- **Multi-page demos** — [`index.html`](./index.html) (with plugins) and [`no-plugin.html`](./no-plugin.html) (bare viewer); switch from the upload-screen nav
 - **Local files** — Open `.dxf` / `.dwg` via the file picker
-- **New drawing** — Create a sample drawing with predefined entities (`DocCreator`)
-- **Simple UI toolbar** — View/review tools, theme/locale toggles, and export submenu via `cad-simple-ui-plugin`
+- **Sample drawing factory** — `DocCreator` helper for creating drawings with predefined entities
+- **Simple UI toolbar** — View/review tools, theme/locale toggles, and export submenu via `cad-simple-ui-plugin` (with-plugins page only)
 - **Layer Manager dock** — Toolbar **Layer Manager** opens a Chrome DevTools-style dock panel (layers tab) beside the canvas; the host page must provide a dedicated canvas parent (see [Dock panel host layout](#dock-panel-host-layout))
 - **Custom command** — Demo ellipse command (`ellipsedemo`)
-- **Dynamic export plugins** — HTML (`chtml`), PDF (`cpdf`), SVG (`csvg`) load in separate chunks when triggered from the toolbar export menu
-- **Split viewer bundle** — Default Vite config puts `cad-simple-viewer` in its own chunk so the main entry stays small and the page loads quickly (see [Vite configuration](#vite-configuration))
+- **Dynamic export plugins** — HTML (`chtml`), PDF (`cpdf`), SVG (`csvg`) load in separate chunks when triggered from the toolbar export menu (with-plugins page only)
+- **Optional plugins** — Skip all plugin registration for a canvas-only host (see [Running without plugins](#running-without-plugins))
+- **Split viewer bundles** — Default Vite config emits separate chunks for `cad-simple-viewer`, `data-model`, `three-renderer` (with MTEXT stack), and `three`, so the viewer file stays smaller and peers cache independently (see [Vite configuration](#vite-configuration))
 - **Browser-only** — Parsing and rendering run in the browser (Web Workers + WebAssembly for DWG)
 
 ## Prerequisites
@@ -28,13 +30,13 @@ pnpm build    # Typecheck + production build
 pnpm preview  # Serve dist/
 ```
 
-The build copies DWG/MTEXT workers and `viewer-runtime.iife.js` into `dist/assets/` (see [Vite configuration](#vite-configuration)).
+The build copies DWG/MTEXT workers into `dist/assets/`. If `@mlightcad/cad-html-plugin` is installed, it also copies `viewer-runtime.iife.js` (HTML export only — see [HTML plugin and viewer-runtime](#html-plugin-and-viewer-runtimeiifejs-are-optional)).
 
 ## Web Worker readiness
 
 DWG parsing and MTEXT rendering run in separate worker scripts. DXF is parsed by the built-in converter in `@mlightcad/data-model` (no separate worker). Host apps must deploy the DWG/MTEXT worker files and set `webworkerFileUrls` in `AcApDocManager.createInstance()`. Before opening a drawing, verify the workers are reachable — do **not** probe them with a plain GET (the LibreDWG worker alone is ~12 MB).
 
-This example centralizes URLs in [`src/workerConfig.ts`](./src/workerConfig.ts) and demonstrates the readiness APIs from [`@mlightcad/cad-simple-viewer`](https://github.com/mlightcad/cad-viewer/tree/main/packages/cad-simple-viewer) in [`src/main.ts`](./src/main.ts):
+This example centralizes URLs in [`src/workerConfig.ts`](./src/workerConfig.ts) and demonstrates the readiness APIs from [`@mlightcad/cad-simple-viewer`](https://github.com/mlightcad/cad-viewer/tree/main/packages/cad-simple-viewer) in [`src/app.ts`](./src/app.ts):
 
 ```typescript
 import { AcApDocManager } from '@mlightcad/cad-simple-viewer'
@@ -76,12 +78,98 @@ To test a failure locally, temporarily rename or omit a worker file under `dist/
 
 ## Usage
 
-1. Start the dev server and open the URL shown in the terminal.
-2. **Open** — Choose a `.dxf` or `.dwg` file, or click **New** to create the sample drawing. The viewer and plugins initialize on first use (not at page load).
-3. After initialization, a collapsible toolbar appears on the right with view tools, **Layer Manager**, theme/locale toggles, and an **Export** submenu (HTML, PDF, SVG). Click **Layer Manager** to open the dock panel on the left (layers list). Each export dynamically imports its plugin chunk on first use, so the first run may take a moment.
-4. Run the custom ellipse command from the viewer command line: `ellipsedemo`.
+1. Start the dev server and open the URL shown in the terminal (`index.html` by default).
+2. Use the top nav (**With plugins** / **Without plugins**) to switch demos, or open `/no-plugin.html` directly.
+3. **Open** — Choose a `.dxf` or `.dwg` file. The viewer (and plugins, on the first page) initialize on first use (not at page load).
+4. On the **With plugins** page, a collapsible toolbar appears on the right with view tools, **Layer Manager**, theme/locale toggles, and an **Export** submenu (HTML, PDF, SVG). Click **Layer Manager** to open the dock panel on the left (layers list). Each export dynamically imports its plugin chunk on first use, so the first run may take a moment.
+5. On the **Without plugins** page there is no toolbar — only the canvas and this example’s upload / reopen UI.
+6. Run the custom ellipse command from the viewer command line (when available): `ellipsedemo`.
 
 Toast messages at the top report success or errors. The window title updates when a document is activated.
+
+## Running without plugins
+
+Plugins are **opt-in**. `cad-simple-viewer` does not load UI or export plugins unless your host registers them. This repo shows both setups:
+
+| Page | Entry | Plugins |
+|------|--------|---------|
+| [`index.html`](./index.html) | [`src/main.ts`](./src/main.ts) | Simple UI + lazy HTML/PDF/SVG via `registerPlugins()` |
+| [`no-plugin.html`](./no-plugin.html) | [`src/mainNoPlugin.ts`](./src/mainNoPlugin.ts) | None — bare `AcApDocManager` only |
+
+Shared app logic lives in [`src/app.ts`](./src/app.ts). Pass `enablePlugins: false` to skip registration:
+
+```typescript
+import { bootCadViewerApp } from './app'
+
+// Bare viewer — no toolbar, no export plugins
+bootCadViewerApp({ enablePlugins: false })
+```
+
+Equivalent manual setup after `AcApDocManager.createInstance()`:
+
+```typescript
+import { AcApDocManager, applyUiTheme } from '@mlightcad/cad-simple-viewer'
+import { WEBWORKER_FILE_URLS } from './workerConfig'
+
+applyUiTheme('dark', host)
+
+AcApDocManager.createInstance({
+  container: document.getElementById('cad-container')!,
+  busyIndicatorHost: host,
+  autoResize: true,
+  webworkerFileUrls: WEBWORKER_FILE_URLS
+})
+
+// Do NOT call:
+// - registerPlugins(host)
+// - registerSimpleUiPlugin(...)
+// - registerLazyHtmlPlugin / registerLazyPdfPlugin / registerLazySvgPlugin
+// - pluginManager.registerLazyPlugin(...)
+
+// Open drawings with your own UI, e.g.:
+// await AcApDocManager.instance.openDocument(name, arrayBuffer, options)
+```
+
+Checklist when you want a canvas-only host:
+
+1. **Do not** import `@mlightcad/cad-*-plugin` packages (or their `/register` stubs) into the entry that should stay plugin-free. Prefer a dynamic `import('./register')` only when plugins are enabled (as in `src/app.ts`) so the bare page never fetches those stubs.
+2. **Do not** call `registerPlugins`, `registerSimpleUiPlugin`, or `registerLazy*Plugin`.
+3. Provide your own open / chrome UI (this example keeps the upload screen and corner **Open** button).
+4. You can still register **custom commands** on `commandManager` without any plugin packages.
+
+To add plugins later, call the helpers in [`src/register.ts`](./src/register.ts) (or register lazily yourself — see [Plugin system](#plugin-system-html--pdf--svg-export)).
+
+### HTML plugin and `viewer-runtime.iife.js` are optional
+
+[`viewer-runtime.iife.js`](https://github.com/mlightcad/cad-viewer/issues/472) ships with `@mlightcad/cad-html-plugin`. It is **not** part of core viewing. Configure it on the HTML plugin only:
+
+```typescript
+import { registerLazyHtmlPlugin } from '@mlightcad/cad-html-plugin/register'
+
+registerLazyHtmlPlugin(AcApDocManager.instance.pluginManager, {
+  viewerRuntimeUrl: './assets/viewer-runtime.iife.js'
+})
+```
+
+Do **not** pass a runtime URL to `AcApDocManager.createInstance()` — that option was removed from `cad-simple-viewer`. The plugin fetches the runtime only when you run HTML export (`chtml`).
+
+| Need | `@mlightcad/cad-html-plugin` | Copy `viewer-runtime.iife.js` / `viewerRuntimeUrl` |
+|------|------------------------------|-----------------------------------------------------|
+| Open / view DXF or DWG | Not required | Not required |
+| Toolbar / PDF / SVG export | Not required (those are separate packages) | Not required |
+| Export offline HTML (`chtml`) | Required | Required |
+
+This example copies `viewer-runtime.iife.js` in Vite **only if** the HTML plugin package is present. The **Without plugins** page never registers HTML export.
+
+#### Remove the HTML plugin package entirely
+
+```bash
+pnpm remove @mlightcad/cad-html-plugin
+pnpm build
+pnpm dev
+```
+
+Then open either demo page and load a DXF/DWG — viewing still works. On the **With plugins** page you would also remove the `registerLazyHtmlPlugin` call from [`src/register.ts`](./src/register.ts); PDF/SVG and the simple UI can remain.
 
 ## Supported formats
 
@@ -105,7 +193,7 @@ applyUiTheme('dark', host)
 AcApDocManager.createInstance({
   container: document.getElementById('cad-container')!,
   busyIndicatorHost: host,
-  // ... webworkerFileUrls, htmlViewerRuntimeUrl, etc.
+  // ... webworkerFileUrls, etc.
 })
 
 await registerSimpleUiPlugin(AcApDocManager.instance.pluginManager, {
@@ -124,7 +212,7 @@ await registerSimpleUiPlugin(AcApDocManager.instance.pluginManager, {
 })
 ```
 
-This example calls `registerPlugins(host)` from `src/register.ts`, which registers lazy export plugins and the simple UI plugin together. See the [cad-simple-ui-plugin README](https://github.com/mlightcad/cad-viewer/tree/main/packages/cad-simple-ui-plugin) for toolbar customization (`items`, `appendItems`, placement, etc.).
+This example’s **With plugins** page calls `registerPlugins(host)` from `src/register.ts`, which registers lazy export plugins and the simple UI plugin together. The **Without plugins** page never calls that function — see [Running without plugins](#running-without-plugins). See the [cad-simple-ui-plugin README](https://github.com/mlightcad/cad-viewer/tree/main/packages/cad-simple-ui-plugin) for toolbar customization (`items`, `appendItems`, placement, etc.).
 
 ### Dock panel host layout
 
@@ -204,6 +292,7 @@ Alternatively, register manually on `pluginManager` after `AcApDocManager.create
 
 ```typescript
 import { AcApDocManager } from '@mlightcad/cad-simple-viewer'
+import { registerLazyHtmlPlugin } from '@mlightcad/cad-html-plugin/register'
 
 AcApDocManager.createInstance({
   container: document.getElementById('cad-container')!,
@@ -211,20 +300,14 @@ AcApDocManager.createInstance({
   webworkerFileUrls: {
     mtextRender: './assets/mtext-renderer-worker.js',
     dwgParser: './assets/libredwg-parser-worker.js'
-  },
-  // Required for HTML export — must match where viewer-runtime.iife.js is served
-  htmlViewerRuntimeUrl: './assets/viewer-runtime.iife.js'
+  }
 })
 
 const pluginManager = AcApDocManager.instance.pluginManager
 
-pluginManager.registerLazyPlugin({
-  name: 'HtmlPlugin',
-  triggers: ['chtml'],
-  loader: async () => {
-    const { createHtmlPlugin } = await import('@mlightcad/cad-html-plugin')
-    return createHtmlPlugin()
-  }
+// HTML export only — configure runtime URL on the plugin, not createInstance
+registerLazyHtmlPlugin(pluginManager, {
+  viewerRuntimeUrl: './assets/viewer-runtime.iife.js'
 })
 
 pluginManager.registerLazyPlugin({
@@ -263,35 +346,74 @@ Shared settings (both approaches):
 
 - **`base: './'`** — relative asset URLs for static hosting (e.g. GitHub Pages).
 - **`build.modulePreload: false`** — do not inject `<link rel="modulepreload">` for lazy chunks; plugin bundles load only when a trigger command runs.
-- **`vite-plugin-static-copy`** — copy DWG/MTEXT workers and `viewer-runtime.iife.js` into `dist/assets/` (required at runtime; not part of the JS bundle graph).
+- **`vite-plugin-static-copy`** — copy DWG/MTEXT workers into `dist/assets/` (required for DWG/MTEXT). Copy `viewer-runtime.iife.js` **only if** `@mlightcad/cad-html-plugin` is installed (optional; HTML export only).
 - **`pnpm analyze`** — `vite build --mode analyze` writes `stats.html` for bundle inspection.
 
-### Approach A — Viewer in a separate chunk (default in this repo)
+### Approach A — Viewer stack in separate chunks (default in this repo)
 
-Use `rollupOptions.output.manualChunks` to emit `@mlightcad/cad-simple-viewer` and its core dependencies (`data-model`, `three-renderer`, `geometry-engine`) as a single output file (e.g. `cad-simple-viewer-[hash].js`). Your app shell stays in `main-[hash].js`, which stays small so the initial HTML/JS parse is fast. Export plugins remain separate async chunks.
+Use `rollupOptions.output.manualChunks` to emit the viewer and its heavy peer dependencies as **separate** cacheable files:
 
-**When to use:** production demos or apps where you want the smallest main entry and a dedicated, cacheable viewer chunk.
+| Chunk | Packages |
+|-------|----------|
+| `three` | `three` (+ `three/examples/jsm/*`) |
+| `data-model` | `@mlightcad/data-model`, `geometry-engine`, `graphic-interface`, `common` |
+| `three-renderer` | `@mlightcad/three-renderer`, `mtext-renderer`, `mtext-parser`, `shx-parser` |
+| `cad-simple-viewer` | `@mlightcad/cad-simple-viewer` only |
+
+Your app shell stays in a tiny `main`/`app` entry. Export plugins remain separate async chunks. Keep MTEXT packages with `three-renderer` — otherwise Rollup may place them inside `cad-simple-viewer` and create a circular chunk edge (`three-renderer` ↔ `cad-simple-viewer`), which historically caused runtime `extends undefined`.
+
+**When to use:** production demos or apps where you want a small main entry, a smaller viewer file, and independently cacheable peer deps.
 
 ```typescript
-import { resolve } from 'path'
+import { existsSync } from 'node:fs'
+import { resolve } from 'node:path'
 import { defineConfig } from 'vite'
 import { visualizer } from 'rollup-plugin-visualizer'
 import { viteStaticCopy } from 'vite-plugin-static-copy'
 
-const VIEWER_STACK =
-  /\/(cad-simple-viewer|three-renderer|data-model|geometry-engine)\//
+function viewerManualChunk(id: string): string | undefined {
+  const path = id.replace(/\\/g, '/')
+  if (
+    path.includes('/node_modules/three/') ||
+    path.includes('/node_modules/.pnpm/three@')
+  ) {
+    return 'three'
+  }
+  if (
+    path.includes('/@mlightcad/three-renderer/') ||
+    path.includes('/@mlightcad/mtext-renderer/') ||
+    path.includes('/@mlightcad/mtext-parser/') ||
+    path.includes('/@mlightcad/shx-parser/')
+  ) {
+    return 'three-renderer'
+  }
+  if (
+    path.includes('/@mlightcad/data-model/') ||
+    path.includes('/@mlightcad/geometry-engine/') ||
+    path.includes('/@mlightcad/graphic-interface/') ||
+    path.includes('/@mlightcad/common/')
+  ) {
+    return 'data-model'
+  }
+  if (path.includes('/@mlightcad/cad-simple-viewer/')) {
+    return 'cad-simple-viewer'
+  }
+}
+
+const viewerRuntimeSrc =
+  './node_modules/@mlightcad/cad-html-plugin/dist/viewer-runtime.iife.js'
 
 export default defineConfig(({ mode }) => ({
   base: './',
   build: {
     modulePreload: false,
     rollupOptions: {
-      input: { main: resolve(__dirname, 'index.html') },
+      input: {
+        main: resolve(__dirname, 'index.html'),
+        'no-plugin': resolve(__dirname, 'no-plugin.html')
+      },
       output: {
-        manualChunks(id) {
-          const path = id.replace(/\\/g, '/')
-          if (VIEWER_STACK.test(path)) return 'cad-simple-viewer'
-        }
+        manualChunks: viewerManualChunk
       }
     }
   },
@@ -302,10 +424,10 @@ export default defineConfig(({ mode }) => ({
           src: './node_modules/@mlightcad/cad-simple-viewer/dist/*-worker.js',
           dest: 'assets'
         },
-        {
-          src: './node_modules/@mlightcad/cad-html-plugin/dist/viewer-runtime.iife.js',
-          dest: 'assets'
-        }
+        // Optional — omit entirely if you do not use HTML export
+        ...(existsSync(resolve(__dirname, viewerRuntimeSrc))
+          ? [{ src: viewerRuntimeSrc, dest: 'assets' }]
+          : [])
       ]
     }),
     mode === 'analyze' &&
@@ -314,7 +436,7 @@ export default defineConfig(({ mode }) => ({
 }))
 ```
 
-This matches the current [`vite.config.ts`](./vite.config.ts).
+The current [`vite.config.ts`](./vite.config.ts) copies `viewer-runtime.iife.js` only when the HTML plugin package is present. Multi-page `input` emits both `index.html` and `no-plugin.html` into `dist/`.
 
 ### Approach B — Viewer in the main bundle (simpler)
 
@@ -333,7 +455,10 @@ export default defineConfig(({ mode }) => ({
   build: {
     modulePreload: false,
     rollupOptions: {
-      input: { main: resolve(__dirname, 'index.html') }
+      input: {
+        main: resolve(__dirname, 'index.html'),
+        'no-plugin': resolve(__dirname, 'no-plugin.html')
+      }
     }
   },
   plugins: [
@@ -357,10 +482,11 @@ export default defineConfig(({ mode }) => ({
 
 ### Comparison
 
-| | Approach A (separate viewer chunk) | Approach B (viewer in main) |
+| | Approach A (split viewer stack) | Approach B (viewer in main) |
 |---|----------------------------------|-----------------------------|
 | Main bundle size | Smallest | Includes full viewer stack |
-| Vite config | `manualChunks` for viewer deps | No extra Rollup output options |
+| Viewer deps | Separate `three` / `data-model` / `three-renderer` / `cad-simple-viewer` chunks | Bundled into main |
+| Vite config | `manualChunks` as above | No extra Rollup output options |
 | Export plugins | Lazy chunks via `import()` | Lazy chunks via `import()` |
 | Workers / HTML runtime | Static copy to `assets/` | Static copy to `assets/` |
 
@@ -380,14 +506,14 @@ AcApDocManager.instance.sendStringToExecute('csvg')
 
 ### Static assets for HTML export
 
-HTML export embeds `viewer-runtime.iife.js` from `@mlightcad/cad-html-plugin` (not from `cad-simple-viewer`). Copy it next to your workers and set `htmlViewerRuntimeUrl` to that path.
+HTML export embeds `viewer-runtime.iife.js` from `@mlightcad/cad-html-plugin` (not from `cad-simple-viewer`). This file is **only** fetched when running `chtml`, not when opening drawings. If you do not use HTML export, you can omit the package, the Vite copy target, and `viewerRuntimeUrl` — see [HTML plugin and viewer-runtime](#html-plugin-and-viewer-runtimeiifejs-are-optional).
 
-`vite-plugin-static-copy` (see [Vite configuration](#vite-configuration)) copies:
+When the package is installed, `vite-plugin-static-copy` (see [Vite configuration](#vite-configuration)) copies:
 
-- `./node_modules/@mlightcad/cad-simple-viewer/dist/*-worker.js` → `assets/` (DWG parser, mtext renderer)
-- `./node_modules/@mlightcad/cad-html-plugin/dist/viewer-runtime.iife.js` → `assets/`
+- `./node_modules/@mlightcad/cad-simple-viewer/dist/*-worker.js` → `assets/` (DWG parser, mtext renderer) — always
+- `./node_modules/@mlightcad/cad-html-plugin/dist/viewer-runtime.iife.js` → `assets/` — only if the package is present
 
-If `viewer-runtime.iife.js` is missing or the URL is wrong, the dev server may return `index.html` instead and the exported HTML will fail with `Unexpected token '<'`.
+If you use HTML export and `viewer-runtime.iife.js` is missing or the URL is wrong, export fails when loading the runtime (or the dev server may return `index.html` and you see `Unexpected token '<'`).
 
 ## Basic integration
 
@@ -406,7 +532,7 @@ If `viewer-runtime.iife.js` is missing or the URL is wrong, the dev server may r
 }
 ```
 
-Add `cad-simple-ui-plugin` for toolbar chrome. Add export plugin packages only for the formats you need, and register each one with lazy loaders as shown above.
+Add `cad-simple-ui-plugin` for toolbar chrome. Add export plugin packages only for the formats you need, and register each one with lazy loaders as shown above. **`@mlightcad/cad-html-plugin` is optional** — required only for offline HTML export (`chtml`), not for viewing drawings (see [HTML plugin and viewer-runtime](#html-plugin-and-viewer-runtimeiifejs-are-optional)).
 
 ### HTML container
 
@@ -445,10 +571,13 @@ await AcApDocManager.instance.openDocument(file.name, fileContent, options)
 
 | Topic | Implementation |
 |-------|----------------|
-| Document manager | `AcApDocManager.createInstance({ container, busyIndicatorHost, baseUrl, webworkerFileUrls, htmlViewerRuntimeUrl })` |
+| Multi-page demos | `index.html` (plugins on) + `no-plugin.html` (plugins off) |
+| Document manager | `AcApDocManager.createInstance({ container, busyIndicatorHost, baseUrl, webworkerFileUrls })` |
 | UI theme | `applyUiTheme('dark', host)` before `createInstance` |
 | Simple UI | `registerSimpleUiPlugin` via `src/register.ts` — toolbar, dock panel / Layer Manager, export submenu |
-| Dock host layout | `#viewerPane` + `.viewer-canvas-area` + `#cad-container` in `index.html` |
+| Skip plugins | `bootCadViewerApp({ enablePlugins: false })` — see [Running without plugins](#running-without-plugins) |
+| HTML runtime URL | `registerLazyHtmlPlugin(pm, { viewerRuntimeUrl })` — not on `createInstance` |
+| Dock host layout | `#viewerPane` + `.viewer-canvas-area` + `#cad-container` in each HTML page |
 | Local open | `openDocument(name, ArrayBuffer, options)` |
 | Custom commands | `commandManager.addCommand(...)` — see `src/ellipseCmd.ts` |
 | Lazy export plugins | `/register` stubs in `src/register.ts` — HTML, PDF, SVG chunks on first trigger |
@@ -456,19 +585,23 @@ await AcApDocManager.instance.openDocument(file.name, fileContent, options)
 | Workers & assets | `webworkerFileUrls`, static copy in Vite (see [Vite configuration](#vite-configuration)) |
 | Worker readiness | `checkWebworkerReadiness`, `areWorkersReady`, `checkWorkersOnInit`, `workersReady` event (see [Web Worker readiness](#web-worker-readiness)) |
 
-Lazy initialization: `AcApDocManager` is created on first file open or **New**, not at page load.
+Lazy initialization: `AcApDocManager` is created on first file open, not at page load.
 
 ## Project structure
 
 | Path | Role |
 |------|------|
-| `index.html` | Upload UI, `viewerPane` host, `.viewer-canvas-area` dock mount, `#cad-container` |
-| `src/main.ts` | `CadViewerApp` — lazy init, worker readiness checks, file open, new drawing |
+| `index.html` | With-plugins demo — upload UI, `viewerPane` host, dock mount, `#cad-container` |
+| `no-plugin.html` | Bare-viewer demo — same open UI, no plugin registration |
+| `src/styles/app.css` | Shared layout / upload-screen styles for both pages |
+| `src/app.ts` | `CadViewerApp` + `bootCadViewerApp` — lazy init, worker checks, optional plugins |
+| `src/main.ts` | Entry for with-plugins page (`enablePlugins: true`) |
+| `src/mainNoPlugin.ts` | Entry for bare viewer page (`enablePlugins: false`) |
 | `src/workerConfig.ts` | Shared `webworkerFileUrls` paths for init and readiness probes |
-| `src/register.ts` | Plugin registration — lazy export plugins + simple UI |
+| `src/register.ts` | Plugin registration — lazy export plugins + simple UI (`viewerRuntimeUrl` on HTML plugin) |
 | `src/ellipseCmd.ts` | Custom `ellipsedemo` command |
-| `src/docCreator.ts` | Sample drawing factory for **New** |
-| `vite.config.ts` | Approach A: `manualChunks` for viewer stack, `modulePreload: false`, static copy of workers + `viewer-runtime.iife.js` |
+| `src/docCreator.ts` | Sample drawing factory helper |
+| `vite.config.ts` | Multi-page inputs, Approach A `manualChunks`, conditional copy of `viewer-runtime.iife.js` |
 
 ## Beyond a viewer
 
