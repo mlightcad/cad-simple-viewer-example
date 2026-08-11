@@ -4,6 +4,9 @@ import { registerSimpleUiPlugin } from '@mlightcad/cad-simple-ui-plugin/register
 import { AcApDocManager } from '@mlightcad/cad-simple-viewer'
 import { registerLazySvgPlugin } from '@mlightcad/cad-svg-plugin/register'
 
+/** Served path for `viewer-runtime.iife.js` after Vite static copy (HTML export only). */
+export const HTML_VIEWER_RUNTIME_URL = './assets/viewer-runtime.iife.js'
+
 let isLazyPluginRegistered = false
 let isSimpleUiRegistered = false
 
@@ -12,7 +15,9 @@ let isSimpleUiRegistered = false
  *
  * Import from each plugin's `/register` subpath so only the registration stub is in the
  * initial bundle; plugin code loads when a trigger command runs.
- * Safe to call multiple times; registration runs once per application lifetime.
+ *
+ * `viewerRuntimeUrl` is configured on the HTML plugin — not on `AcApDocManager`.
+ * Opening DXF/DWG does not require `@mlightcad/cad-html-plugin` or that file.
  */
 export const registerLazyPlugins = (): void => {
   if (isLazyPluginRegistered) {
@@ -20,7 +25,9 @@ export const registerLazyPlugins = (): void => {
   }
 
   const pluginManager = AcApDocManager.instance.pluginManager
-  registerLazyHtmlPlugin(pluginManager)
+  registerLazyHtmlPlugin(pluginManager, {
+    viewerRuntimeUrl: HTML_VIEWER_RUNTIME_URL
+  })
   registerLazyPdfPlugin(pluginManager)
   registerLazySvgPlugin(pluginManager)
 

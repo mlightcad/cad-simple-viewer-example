@@ -3,14 +3,14 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>CAD Simple Viewer Example — With Plugins</title>
+    <title>CAD Simple Viewer Example — Without Plugins</title>
     <link rel="stylesheet" href="/src/styles/app.css" />
   </head>
   <body>
     <div class="viewer-container" id="viewerPane">
       <nav class="demo-nav" aria-label="Demo pages">
-        <a href="./index.html" class="is-active">With plugins</a>
-        <a href="./no-plugin.html">Without plugins</a>
+        <a href="./index.html">With plugins</a>
+        <a href="./no-plugin.html" class="is-active">Without plugins</a>
       </nav>
 
       <div class="upload-screen" id="uploadScreen">
@@ -24,8 +24,8 @@
                   </svg>
                 </div>
                 <div class="upload-hero-text">
-                  <h1 class="upload-title">Select CAD File to View</h1>
-                  <p class="upload-subtitle">Import DWG or DXF drawings into the viewer</p>
+                  <h1 class="upload-title">Bare Viewer (No Plugins)</h1>
+                  <p class="upload-subtitle">Same open options, without toolbar or export plugins</p>
                 </div>
               </section>
 
@@ -116,6 +116,6 @@
         <div id="cad-container"></div>
       </section>
     </div>
-    <script type="module" src="/src/main.ts"></script>
+    <script type="module" src="/src/mainNoPlugin.ts"></script>
   </body>
 </html>
