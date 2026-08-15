@@ -4,6 +4,12 @@ import { defineConfig, type PluginOption } from 'vite'
 import { visualizer } from 'rollup-plugin-visualizer'
 import { viteStaticCopy } from 'vite-plugin-static-copy'
 
+/** Mirror naming helpers from `@mlightcad/cad-simple-viewer` (not shipped there). */
+const LIBREDWG_CONVERTER_PACKAGE = '@mlightcad/libredwg-converter'
+const LIBREDWG_PARSER_WORKER_FILE = 'libredwg-parser-worker.js'
+const LIBREDWG_PARSER_WASM_FILE = 'libredwg-web.wasm'
+const MTEXT_RENDERER_WORKER_FILE = 'mtext-renderer-worker.js'
+
 /**
  * Split heavy peer deps into their own chunks so `cad-simple-viewer-*.js` stays
  * smaller and each package can be cached independently.
@@ -58,6 +64,15 @@ const viewerRuntimeSrc = resolve(
 )
 const hasViewerRuntime = existsSync(viewerRuntimeSrc)
 
+const libredwgDist = `./node_modules/${LIBREDWG_CONVERTER_PACKAGE}/dist`
+const libredwgWasmSrc = resolve(
+  __dirname,
+  'node_modules',
+  LIBREDWG_CONVERTER_PACKAGE,
+  'dist',
+  LIBREDWG_PARSER_WASM_FILE
+)
+
 if (!hasViewerRuntime) {
   console.warn(
     '[cad-simple-viewer-example] viewer-runtime.iife.js not found — HTML export (chtml) unavailable. ' +
@@ -83,14 +98,30 @@ export default defineConfig(({ mode }) => ({
     viteStaticCopy({
       targets: [
         {
-          src: './node_modules/@mlightcad/cad-simple-viewer/dist/*-worker.js',
-          dest: 'assets'
+          src: `./node_modules/@mlightcad/cad-simple-viewer/dist/${MTEXT_RENDERER_WORKER_FILE}`,
+          dest: 'assets',
+          rename: { stripBase: true }
         },
+        {
+          src: `${libredwgDist}/${LIBREDWG_PARSER_WORKER_FILE}`,
+          dest: 'assets',
+          rename: { stripBase: true }
+        },
+        ...(existsSync(libredwgWasmSrc)
+          ? [
+              {
+                src: `${libredwgDist}/${LIBREDWG_PARSER_WASM_FILE}`,
+                dest: 'assets',
+                rename: { stripBase: true }
+              }
+            ]
+          : []),
         ...(hasViewerRuntime
           ? [
               {
                 src: './node_modules/@mlightcad/cad-html-plugin/dist/viewer-runtime.iife.js',
-                dest: 'assets'
+                dest: 'assets',
+                rename: { stripBase: true }
               }
             ]
           : [])

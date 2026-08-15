@@ -225,7 +225,8 @@ export class CadViewerApp {
    * before calling `createInstance`.
    *
    * Configuration highlights:
-   * - `webworkerFileUrls` — DWG parser and MTEXT worker scripts copied to `dist/assets/`
+   * - LibreDWG DWG converter — host-registered via {@link registerLibreDwgConverter} (GPL opt-in)
+   * - `webworkerFileUrls` — MTEXT + LibreDWG worker (+ wasm) copied to `dist/assets/`
    * - `checkWorkersOnInit` — probe worker URLs after registration (see {@link WEBWORKER_FILE_URLS})
    * - `baseUrl` — optional CDN root for built-in resources (demo override)
    * - `useMainThreadDraw` — MTEXT render mode; fixed for the lifetime of the page session
@@ -251,11 +252,15 @@ export class CadViewerApp {
     try {
       // Prefer the shared preload promise so first open awaits in-flight work
       await preloadViewerAppModules(this.enablePlugins)
-      const { AcApDocManager, AcEdCommandStack, applyUiTheme } =
+      const { AcApDocManager, AcEdCommandStack, acedApplyUiTheme } =
         await loadCadSimpleViewer()
       this.DocManager = AcApDocManager
 
-      applyUiTheme('dark', this.viewerPane)
+      acedApplyUiTheme('dark', this.viewerPane)
+
+      // Dynamic import keeps LibreDWG / data-model out of the app entry until first open.
+      const { registerLibreDwgConverter } = await import('./registerLibreDwg')
+      registerLibreDwgConverter(String(WEBWORKER_FILE_URLS.dwgParser))
 
       const workersReachable = await AcApDocManager.checkWebworkerReadiness(
         WEBWORKER_FILE_URLS

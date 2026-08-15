@@ -19,6 +19,7 @@ auto-imports.d.ts
 /.idea
 .project
 .classpath
+.chrome-*/
 .c9/
 *.launch
 .settings/
