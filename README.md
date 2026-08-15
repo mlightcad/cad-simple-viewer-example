@@ -30,17 +30,23 @@ pnpm build    # Typecheck + production build
 pnpm preview  # Serve dist/
 ```
 
-The build copies DWG/MTEXT workers into `dist/assets/`. If `@mlightcad/cad-html-plugin` is installed, it also copies `viewer-runtime.iife.js` (HTML export only — see [HTML plugin and viewer-runtime](#html-plugin-and-viewer-runtimeiifejs-are-optional)).
+The build copies the MTEXT worker from `@mlightcad/cad-simple-viewer` and the LibreDWG worker (+ wasm) from `@mlightcad/libredwg-converter` into `dist/assets/` (wasm must sit next to the LibreDWG worker for `import.meta.url`). If `@mlightcad/cad-html-plugin` is installed, it also copies `viewer-runtime.iife.js` (HTML export only — see [HTML plugin and viewer-runtime](#html-plugin-and-viewer-runtimeiifejs-are-optional)).
 
 ## Web Worker readiness
 
-DWG parsing and MTEXT rendering run in separate worker scripts. DXF is parsed by the built-in converter in `@mlightcad/data-model` (no separate worker). Host apps must deploy the DWG/MTEXT worker files and set `webworkerFileUrls` in `AcApDocManager.createInstance()`. Before opening a drawing, verify the workers are reachable — do **not** probe them with a plain GET (the LibreDWG worker alone is ~12 MB).
+MTEXT rendering runs in a worker shipped with `@mlightcad/cad-simple-viewer`. DXF is parsed by the built-in converter in `@mlightcad/data-model` (no separate worker). **DWG support is opt-in** because LibreDWG is GPL: this example depends on `@mlightcad/libredwg-converter`, deploys its worker (+ wasm), and registers the converter via [`src/registerLibreDwg.ts`](./src/registerLibreDwg.ts) before `createInstance`. Host apps that skip DWG can omit that package and `webworkerFileUrls.dwgParser`.
+
+Before opening a drawing, verify the workers are reachable — do **not** probe them with a plain full GET (the LibreDWG **wasm** next to the worker is ~10 MB).
 
 This example centralizes URLs in [`src/workerConfig.ts`](./src/workerConfig.ts) and demonstrates the readiness APIs from [`@mlightcad/cad-simple-viewer`](https://github.com/mlightcad/cad-viewer/tree/main/packages/cad-simple-viewer) in [`src/app.ts`](./src/app.ts):
 
 ```typescript
 import { AcApDocManager } from '@mlightcad/cad-simple-viewer'
+import { registerLibreDwgConverter } from './registerLibreDwg'
 import { WEBWORKER_FILE_URLS } from './workerConfig'
+
+// Deploy worker + wasm side-by-side under ./assets/ (see vite.config.ts)
+registerLibreDwgConverter(WEBWORKER_FILE_URLS.dwgParser)
 
 // Option 1: check before createInstance (HEAD + ranged GET fallback; caches successes)
 const ready = await AcApDocManager.checkWebworkerReadiness(WEBWORKER_FILE_URLS)
@@ -108,10 +114,10 @@ bootCadViewerApp({ enablePlugins: false })
 Equivalent manual setup after `AcApDocManager.createInstance()`:
 
 ```typescript
-import { AcApDocManager, applyUiTheme } from '@mlightcad/cad-simple-viewer'
+import { AcApDocManager, acedApplyUiTheme } from '@mlightcad/cad-simple-viewer'
 import { WEBWORKER_FILE_URLS } from './workerConfig'
 
-applyUiTheme('dark', host)
+acedApplyUiTheme('dark', host)
 
 AcApDocManager.createInstance({
   container: document.getElementById('cad-container')!,
@@ -176,7 +182,7 @@ Then open either demo page and load a DXF/DWG — viewing still works. On the **
 | Format | Notes |
 |--------|--------|
 | **DXF** | Built-in converter in `@mlightcad/data-model` (no separate worker) |
-| **DWG** | LibreDWG WebAssembly via `libredwg-parser-worker.js` |
+| **DWG** | Optional `@mlightcad/libredwg-converter` (GPL) — registered by this example |
 
 ## Simple UI plugin
 
@@ -184,11 +190,11 @@ Toolbar chrome comes from `@mlightcad/cad-simple-ui-plugin`, not custom HTML but
 
 ```typescript
 import { registerSimpleUiPlugin } from '@mlightcad/cad-simple-ui-plugin/register'
-import { AcApDocManager, applyUiTheme } from '@mlightcad/cad-simple-viewer'
+import { AcApDocManager, acedApplyUiTheme } from '@mlightcad/cad-simple-viewer'
 
 const host = document.getElementById('viewerPane')!
 
-applyUiTheme('dark', host)
+acedApplyUiTheme('dark', host)
 
 AcApDocManager.createInstance({
   container: document.getElementById('cad-container')!,
@@ -346,7 +352,7 @@ Shared settings (both approaches):
 
 - **`base: './'`** — relative asset URLs for static hosting (e.g. GitHub Pages).
 - **`build.modulePreload: false`** — do not inject `<link rel="modulepreload">` for lazy chunks; plugin bundles load only when a trigger command runs.
-- **`vite-plugin-static-copy`** — copy DWG/MTEXT workers into `dist/assets/` (required for DWG/MTEXT). Copy `viewer-runtime.iife.js` **only if** `@mlightcad/cad-html-plugin` is installed (optional; HTML export only).
+- **`vite-plugin-static-copy`** — copy the MTEXT worker from `cad-simple-viewer` and the LibreDWG worker (+ wasm) from `@mlightcad/libredwg-converter` into `dist/assets/` (required for MTEXT / DWG; wasm must be next to the LibreDWG worker). Use `rename: { stripBase: true }` with `vite-plugin-static-copy` ≥ 4. Copy `viewer-runtime.iife.js` **only if** `@mlightcad/cad-html-plugin` is installed (optional; HTML export only).
 - **`pnpm analyze`** — `vite build --mode analyze` writes `stats.html` for bundle inspection.
 
 ### Approach A — Viewer stack in separate chunks (default in this repo)
@@ -373,6 +379,12 @@ import { viteStaticCopy } from 'vite-plugin-static-copy'
 
 function viewerManualChunk(id: string): string | undefined {
   const path = id.replace(/\\/g, '/')
+  if (
+    path.includes('vite/preload-helper') ||
+    path.includes('vite/modulepreload-polyfill')
+  ) {
+    return 'vite-preload'
+  }
   if (
     path.includes('/node_modules/three/') ||
     path.includes('/node_modules/.pnpm/three@')
@@ -421,12 +433,29 @@ export default defineConfig(({ mode }) => ({
     viteStaticCopy({
       targets: [
         {
-          src: './node_modules/@mlightcad/cad-simple-viewer/dist/*-worker.js',
-          dest: 'assets'
+          src: './node_modules/@mlightcad/cad-simple-viewer/dist/mtext-renderer-worker.js',
+          dest: 'assets',
+          rename: { stripBase: true }
+        },
+        {
+          src: './node_modules/@mlightcad/libredwg-converter/dist/libredwg-parser-worker.js',
+          dest: 'assets',
+          rename: { stripBase: true }
+        },
+        {
+          src: './node_modules/@mlightcad/libredwg-converter/dist/libredwg-web.wasm',
+          dest: 'assets',
+          rename: { stripBase: true }
         },
         // Optional — omit entirely if you do not use HTML export
         ...(existsSync(resolve(__dirname, viewerRuntimeSrc))
-          ? [{ src: viewerRuntimeSrc, dest: 'assets' }]
+          ? [
+              {
+                src: viewerRuntimeSrc,
+                dest: 'assets',
+                rename: { stripBase: true }
+              }
+            ]
           : [])
       ]
     }),
@@ -436,7 +465,7 @@ export default defineConfig(({ mode }) => ({
 }))
 ```
 
-The current [`vite.config.ts`](./vite.config.ts) copies `viewer-runtime.iife.js` only when the HTML plugin package is present. Multi-page `input` emits both `index.html` and `no-plugin.html` into `dist/`.
+The current [`vite.config.ts`](./vite.config.ts) copies workers and wasm into `dist/assets/` (with `rename: { stripBase: true }` for `vite-plugin-static-copy` ≥ 4), and copies `viewer-runtime.iife.js` only when the HTML plugin package is present. Multi-page `input` emits both `index.html` and `no-plugin.html` into `dist/`.
 
 ### Approach B — Viewer in the main bundle (simpler)
 
@@ -465,12 +494,24 @@ export default defineConfig(({ mode }) => ({
     viteStaticCopy({
       targets: [
         {
-          src: './node_modules/@mlightcad/cad-simple-viewer/dist/*-worker.js',
-          dest: 'assets'
+          src: './node_modules/@mlightcad/cad-simple-viewer/dist/mtext-renderer-worker.js',
+          dest: 'assets',
+          rename: { stripBase: true }
+        },
+        {
+          src: './node_modules/@mlightcad/libredwg-converter/dist/libredwg-parser-worker.js',
+          dest: 'assets',
+          rename: { stripBase: true }
+        },
+        {
+          src: './node_modules/@mlightcad/libredwg-converter/dist/libredwg-web.wasm',
+          dest: 'assets',
+          rename: { stripBase: true }
         },
         {
           src: './node_modules/@mlightcad/cad-html-plugin/dist/viewer-runtime.iife.js',
-          dest: 'assets'
+          dest: 'assets',
+          rename: { stripBase: true }
         }
       ]
     }),
@@ -510,7 +551,8 @@ HTML export embeds `viewer-runtime.iife.js` from `@mlightcad/cad-html-plugin` (n
 
 When the package is installed, `vite-plugin-static-copy` (see [Vite configuration](#vite-configuration)) copies:
 
-- `./node_modules/@mlightcad/cad-simple-viewer/dist/*-worker.js` → `assets/` (DWG parser, mtext renderer) — always
+- `./node_modules/@mlightcad/cad-simple-viewer/dist/mtext-renderer-worker.js` → `assets/` — always
+- `./node_modules/@mlightcad/libredwg-converter/dist/libredwg-parser-worker.js` (+ `libredwg-web.wasm`) → `assets/` — when opting into DWG (wasm must be beside the worker)
 - `./node_modules/@mlightcad/cad-html-plugin/dist/viewer-runtime.iife.js` → `assets/` — only if the package is present
 
 If you use HTML export and `viewer-runtime.iife.js` is missing or the URL is wrong, export fails when loading the runtime (or the dev server may return `index.html` and you see `Unexpected token '<'`).
@@ -522,17 +564,18 @@ If you use HTML export and `viewer-runtime.iife.js` is missing or the URL is wro
 ```json
 {
   "dependencies": {
-    "@mlightcad/cad-simple-viewer": "^1.5.9",
-    "@mlightcad/cad-simple-ui-plugin": "^1.5.9",
-    "@mlightcad/data-model": "^1.12.2",
-    "@mlightcad/cad-html-plugin": "^1.5.9",
-    "@mlightcad/cad-pdf-plugin": "^1.5.9",
-    "@mlightcad/cad-svg-plugin": "^1.5.9"
+    "@mlightcad/cad-simple-viewer": "1.6.0",
+    "@mlightcad/cad-simple-ui-plugin": "1.6.0",
+    "@mlightcad/data-model": "1.13.0",
+    "@mlightcad/libredwg-converter": "^3.13.0",
+    "@mlightcad/cad-html-plugin": "1.6.0",
+    "@mlightcad/cad-pdf-plugin": "1.6.0",
+    "@mlightcad/cad-svg-plugin": "1.6.0"
   }
 }
 ```
 
-Add `cad-simple-ui-plugin` for toolbar chrome. Add export plugin packages only for the formats you need, and register each one with lazy loaders as shown above. **`@mlightcad/cad-html-plugin` is optional** — required only for offline HTML export (`chtml`), not for viewing drawings (see [HTML plugin and viewer-runtime](#html-plugin-and-viewer-runtimeiifejs-are-optional)).
+Add `cad-simple-ui-plugin` for toolbar chrome. Add `@mlightcad/libredwg-converter` only if you need DWG (GPL). Add export plugin packages only for the formats you need, and register each one with lazy loaders as shown above. **`@mlightcad/cad-html-plugin` is optional** — required only for offline HTML export (`chtml`), not for viewing drawings (see [HTML plugin and viewer-runtime](#html-plugin-and-viewer-runtimeiifejs-are-optional)).
 
 ### HTML container
 
@@ -546,7 +589,7 @@ Add `cad-simple-ui-plugin` for toolbar chrome. Add export plugin packages only f
 </body>
 ```
 
-- `viewerPane` — host for `applyUiTheme`, `busyIndicatorHost`, and the simple UI plugin (`host` option)
+- `viewerPane` — host for `acedApplyUiTheme`, `busyIndicatorHost`, and the simple UI plugin (`host` option)
 - `.viewer-canvas-area` — parent of the canvas; preferred dock mount target (see [Dock panel host layout](#dock-panel-host-layout))
 - `cad-container` — WebGL / view canvas parent passed to `AcApDocManager.createInstance({ container })`
 
@@ -573,7 +616,7 @@ await AcApDocManager.instance.openDocument(file.name, fileContent, options)
 |-------|----------------|
 | Multi-page demos | `index.html` (plugins on) + `no-plugin.html` (plugins off) |
 | Document manager | `AcApDocManager.createInstance({ container, busyIndicatorHost, baseUrl, webworkerFileUrls })` |
-| UI theme | `applyUiTheme('dark', host)` before `createInstance` |
+| UI theme | `acedApplyUiTheme('dark', host)` before `createInstance` |
 | Simple UI | `registerSimpleUiPlugin` via `src/register.ts` — toolbar, dock panel / Layer Manager, export submenu |
 | Skip plugins | `bootCadViewerApp({ enablePlugins: false })` — see [Running without plugins](#running-without-plugins) |
 | HTML runtime URL | `registerLazyHtmlPlugin(pm, { viewerRuntimeUrl })` — not on `createInstance` |
@@ -582,7 +625,7 @@ await AcApDocManager.instance.openDocument(file.name, fileContent, options)
 | Custom commands | `commandManager.addCommand(...)` — see `src/ellipseCmd.ts` |
 | Lazy export plugins | `/register` stubs in `src/register.ts` — HTML, PDF, SVG chunks on first trigger |
 | Export (API) | `sendStringToExecute('chtml' \| 'cpdf' \| 'csvg')` — same commands as toolbar export menu |
-| Workers & assets | `webworkerFileUrls`, static copy in Vite (see [Vite configuration](#vite-configuration)) |
+| Workers & assets | `webworkerFileUrls`, static copy in Vite; LibreDWG via `registerLibreDwg.ts` (see [Vite configuration](#vite-configuration)) |
 | Worker readiness | `checkWebworkerReadiness`, `areWorkersReady`, `checkWorkersOnInit`, `workersReady` event (see [Web Worker readiness](#web-worker-readiness)) |
 
 Lazy initialization: `AcApDocManager` is created on first file open, not at page load.
@@ -597,11 +640,12 @@ Lazy initialization: `AcApDocManager` is created on first file open, not at page
 | `src/app.ts` | `CadViewerApp` + `bootCadViewerApp` — lazy init, worker checks, optional plugins |
 | `src/main.ts` | Entry for with-plugins page (`enablePlugins: true`) |
 | `src/mainNoPlugin.ts` | Entry for bare viewer page (`enablePlugins: false`) |
-| `src/workerConfig.ts` | Shared `webworkerFileUrls` paths for init and readiness probes |
+| `src/workerConfig.ts` | Shared `webworkerFileUrls` paths under `./assets/` |
+| `src/registerLibreDwg.ts` | Host opt-in: registers GPL `@mlightcad/libredwg-converter` for DWG |
 | `src/register.ts` | Plugin registration — lazy export plugins + simple UI (`viewerRuntimeUrl` on HTML plugin) |
 | `src/ellipseCmd.ts` | Custom `ellipsedemo` command |
 | `src/docCreator.ts` | Sample drawing factory helper |
-| `vite.config.ts` | Multi-page inputs, Approach A `manualChunks`, conditional copy of `viewer-runtime.iife.js` |
+| `vite.config.ts` | Multi-page inputs, Approach A `manualChunks`, copy workers/wasm (+ optional `viewer-runtime.iife.js`) to `dist/assets/` |
 
 ## Beyond a viewer
 

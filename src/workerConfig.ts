@@ -1,14 +1,17 @@
 import type { AcApWebworkerFiles } from '@mlightcad/cad-simple-viewer'
 
+/** Local names — do not import from `@mlightcad/cad-simple-viewer` (keeps entry lean). */
+export const LIBREDWG_PARSER_WORKER_FILE = 'libredwg-parser-worker.js'
+export const LIBREDWG_PARSER_WASM_FILE = 'libredwg-web.wasm'
+export const MTEXT_RENDERER_WORKER_FILE = 'mtext-renderer-worker.js'
+
 /**
- * DWG parser and MTEXT worker script URLs for this example.
+ * MTEXT + LibreDWG worker URLs (same `assets/` folder as the JS bundles).
  *
- * DXF is parsed by the built-in converter in `@mlightcad/data-model` (no separate worker).
- * Vite copies the remaining worker files from `@mlightcad/cad-simple-viewer` into
- * `dist/assets/` (see `vite.config.ts`). Host apps must deploy the same files and
- * point `webworkerFileUrls` at their served paths before calling `openDocument()`.
+ * Vite copies these next to each other under `dist/assets/` so the LibreDWG
+ * worker can resolve `libredwg-web.wasm` via `import.meta.url`.
  */
 export const WEBWORKER_FILE_URLS: Required<AcApWebworkerFiles> = {
-  mtextRender: './assets/mtext-renderer-worker.js',
-  dwgParser: './assets/libredwg-parser-worker.js'
+  mtextRender: `./assets/${MTEXT_RENDERER_WORKER_FILE}`,
+  dwgParser: `./assets/${LIBREDWG_PARSER_WORKER_FILE}`
 }
