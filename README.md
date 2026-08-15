@@ -19,7 +19,7 @@ A vanilla TypeScript **multi-page** demo that shows how to embed [`@mlightcad/ca
 
 ## Prerequisites
 
-- Node.js **≥ 20** and pnpm **≥ 10**
+- Node.js **≥ 22** and pnpm **≥ 10** (`vite-plugin-static-copy` v4)
 
 ## Getting started
 

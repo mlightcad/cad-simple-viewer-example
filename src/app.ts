@@ -10,7 +10,6 @@ import {
   scheduleViewerPreload
 } from './viewerLoader'
 import { WEBWORKER_FILE_URLS } from './workerConfig'
-import { registerLibreDwgConverter } from './registerLibreDwg'
 
 /**
  * Toast notification severity used by {@link CadViewerApp.showMessage}.
@@ -259,7 +258,8 @@ export class CadViewerApp {
 
       acedApplyUiTheme('dark', this.viewerPane)
 
-      // Same pattern as cad-viewer monorepo example: register before createInstance.
+      // Dynamic import keeps LibreDWG / data-model out of the app entry until first open.
+      const { registerLibreDwgConverter } = await import('./registerLibreDwg')
       registerLibreDwgConverter(String(WEBWORKER_FILE_URLS.dwgParser))
 
       const workersReachable = await AcApDocManager.checkWebworkerReadiness(

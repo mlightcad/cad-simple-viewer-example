@@ -27,7 +27,7 @@ export function loadCadSimpleViewer(): Promise<CadSimpleViewerModule> {
 
 /**
  * Preloads the viewer package plus local modules needed on first open
- * (`i18n`, ellipse demo command, and optionally plugin registration).
+ * (`i18n`, ellipse demo command, LibreDWG registration, and optionally plugin registration).
  *
  * Safe to call multiple times; work is shared via a single promise.
  * Failed attempts clear the cached promise so a later open can retry.
@@ -38,7 +38,11 @@ export function preloadViewerAppModules(enablePlugins: boolean): Promise<void> {
   if (!appModulesPromise) {
     appModulesPromise = (async () => {
       await loadCadSimpleViewer()
-      const tasks: Promise<unknown>[] = [import('./i8n'), import('./ellipseCmd')]
+      const tasks: Promise<unknown>[] = [
+        import('./i8n'),
+        import('./ellipseCmd'),
+        import('./registerLibreDwg')
+      ]
       if (enablePlugins) {
         tasks.push(import('./register'))
       }
