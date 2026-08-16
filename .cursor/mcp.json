@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "realdwg-web Docs": {
+      "url": "https://gitmcp.io/mlightcad/realdwg-web"
+    },
+    "cad-viewer Docs": {
+      "url": "https://gitmcp.io/mlightcad/cad-viewer"
+    },
+    "mtext-renderer Docs": {
+      "url": "https://gitmcp.io/mlightcad/mtext-renderer"
+    }
+  }
+}
