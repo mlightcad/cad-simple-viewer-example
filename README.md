@@ -636,6 +636,7 @@ Lazy initialization: `AcApDocManager` is created on first file open, not at page
 |------|------|
 | `index.html` | With-plugins demo — upload UI, `viewerPane` host, dock mount, `#cad-container` |
 | `no-plugin.html` | Bare-viewer demo — same open UI, no plugin registration |
+| `.cursor/mcp.json` | Project MCP servers for RealDWG / cad-viewer / MTEXT docs (see [Ask the docs via MCP](#ask-the-docs-via-mcp)) |
 | `src/styles/app.css` | Shared layout / upload-screen styles for both pages |
 | `src/app.ts` | `CadViewerApp` + `bootCadViewerApp` — lazy init, worker checks, optional plugins |
 | `src/main.ts` | Entry for with-plugins page (`enablePlugins: true`) |
@@ -655,6 +656,20 @@ Lazy initialization: `AcApDocManager` is created on first file open, not at page
 
 - [Command wiki](https://github.com/mlightcad/cad-viewer/wiki/Command)
 - [Example: `ellipseCmd.ts`](./src/ellipseCmd.ts)
+
+## Ask the docs via MCP
+
+If anything about the drawing / entity APIs or MTEXT rendering is unclear while you work in an AI coding tool, ask through these [GitMCP](https://gitmcp.io) doc servers instead of guessing from outdated training data:
+
+| MCP server | Docs source | Use when |
+|------------|-------------|---------|
+| `realdwg-web Docs` | [mlightcad/realdwg-web](https://gitmcp.io/mlightcad/realdwg-web) | Database / entity APIs (RealDWG-style patterns used by this stack) |
+| `cad-viewer Docs` | [mlightcad/cad-viewer](https://gitmcp.io/mlightcad/cad-viewer) | Viewer packages (`cad-simple-viewer`, plugins, commands, workers) |
+| `mtext-renderer Docs` | [mlightcad/mtext-renderer](https://gitmcp.io/mlightcad/mtext-renderer) | MTEXT parsing, layout, and rendering |
+
+**Cursor:** this repo already ships the servers in [`.cursor/mcp.json`](./.cursor/mcp.json). Open the project, enable the servers if prompted, then ask in chat (for example: how to create a polyline, or how MTEXT workers relate to `webworkerFileUrls`).
+
+**Other vibe coding tools** (Claude Desktop, Windsurf, VS Code, Cline, etc.): open each GitMCP URL above in a browser. The page shows ready-made MCP config snippets for many clients — copy the settings for your tool into its MCP / settings file. No local install is required; GitMCP runs as a remote docs server.
 
 ## Related packages
 
