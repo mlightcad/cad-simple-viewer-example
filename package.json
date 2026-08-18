@@ -21,11 +21,11 @@
     "vite-plugin-static-copy": "^4.1.1"
   },
   "dependencies": {
-    "@mlightcad/cad-html-plugin": "1.6.0",
-    "@mlightcad/cad-pdf-plugin": "1.6.0",
-    "@mlightcad/cad-svg-plugin": "1.6.0",
-    "@mlightcad/cad-simple-ui-plugin": "1.6.0",
-    "@mlightcad/cad-simple-viewer": "1.6.0",
+    "@mlightcad/cad-html-plugin": "1.6.1",
+    "@mlightcad/cad-pdf-plugin": "1.6.1",
+    "@mlightcad/cad-svg-plugin": "1.6.1",
+    "@mlightcad/cad-simple-ui-plugin": "1.6.1",
+    "@mlightcad/cad-simple-viewer": "1.6.1",
     "@mlightcad/data-model": "1.13.0",
     "@mlightcad/libredwg-converter": "^3.13.0"
   }
