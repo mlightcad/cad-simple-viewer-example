@@ -74,11 +74,20 @@
                   </div>
                 </div>
 
+                <div class="setting-block setting-block--full">
+                  <h3 class="setting-label">Curve quality</h3>
+                  <div class="pill-segment" data-option-group="circleSides" role="radiogroup" aria-label="Curve quality">
+                    <button type="button" class="pill-option is-active" data-value="50" role="radio" aria-checked="true" title="Fewer vertices, smaller files">Memory</button>
+                    <button type="button" class="pill-option" data-value="100" role="radio" aria-checked="false" title="Balanced (100 sides per circle)">Standard</button>
+                    <button type="button" class="pill-option" data-value="1000" role="radio" aria-checked="false" title="Smoother curves, more memory">Quality</button>
+                  </div>
+                </div>
+
                 <div class="setting-block">
                   <h3 class="setting-label">Text rendering</h3>
                   <div class="pill-segment" data-option-group="textRendering" role="radiogroup" aria-label="Text rendering">
-                    <button type="button" class="pill-option is-active" data-value="worker" role="radio" aria-checked="true" title="Faster, more memory">Worker</button>
-                    <button type="button" class="pill-option" data-value="main" role="radio" aria-checked="false" title="Slower, less memory">Main thread</button>
+                    <button type="button" class="pill-option" data-value="worker" role="radio" aria-checked="false" title="Faster, more memory">Worker</button>
+                    <button type="button" class="pill-option is-active" data-value="main" role="radio" aria-checked="true" title="Slower, less memory">Main thread</button>
                   </div>
                 </div>
 
@@ -91,10 +100,34 @@
                 </div>
 
                 <div class="setting-block">
+                  <h3 class="setting-label">Wait for text</h3>
+                  <div class="pill-segment" data-option-group="waitForTextGeometry" role="radiogroup" aria-label="Hold open progress until text geometry finishes">
+                    <button type="button" class="pill-option" data-value="true" role="radio" aria-checked="false" title="Keep “Rendering drawing ...” until deferred text is done">On</button>
+                    <button type="button" class="pill-option is-active" data-value="false" role="radio" aria-checked="true" title="Hide progress after entity convert (default); export still waits for text">Off</button>
+                  </div>
+                </div>
+
+                <div class="setting-block">
                   <h3 class="setting-label">Non-plottable</h3>
                   <div class="pill-segment" data-option-group="noPlotLayers" role="radiogroup" aria-label="Non-plottable layers">
                     <button type="button" class="pill-option is-active" data-value="false" role="radio" aria-checked="true" title="Web viewer default">Hide</button>
                     <button type="button" class="pill-option" data-value="true" role="radio" aria-checked="false" title="AutoCAD editor semantics">Show</button>
+                  </div>
+                </div>
+
+                <div class="setting-block">
+                  <h3 class="setting-label">Export</h3>
+                  <div class="pill-segment" data-option-group="disableExport" role="radiogroup" aria-label="Export">
+                    <button type="button" class="pill-option is-active" data-value="false" role="radio" aria-checked="true" title="Allow DXF/HTML/PDF/SVG/PNG export">Enable</button>
+                    <button type="button" class="pill-option" data-value="true" role="radio" aria-checked="false" title="Hide export commands and File menu items">Disable</button>
+                  </div>
+                </div>
+
+                <div class="setting-block">
+                  <h3 class="setting-label">Paper background</h3>
+                  <div class="pill-segment" data-option-group="paperSpaceBackground" role="radiogroup" aria-label="Paper background">
+                    <button type="button" class="pill-option is-active" data-value="ffffff" role="radio" aria-checked="true" title="Desktop CAD / print preview">White</button>
+                    <button type="button" class="pill-option" data-value="000000" role="radio" aria-checked="false" title="Web viewer preference">Black</button>
                   </div>
                 </div>
               </div>

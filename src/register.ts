@@ -1,6 +1,6 @@
 import { registerLazyHtmlPlugin } from '@mlightcad/cad-html-plugin/register'
 import { registerLazyPdfPlugin } from '@mlightcad/cad-pdf-plugin/register'
-import { registerSimpleUiPlugin } from '@mlightcad/cad-simple-ui-plugin/register'
+import { acuiRegisterSimpleUiPlugin } from '@mlightcad/cad-simple-ui-plugin/register'
 import { AcApDocManager } from '@mlightcad/cad-simple-viewer'
 import { registerLazySvgPlugin } from '@mlightcad/cad-svg-plugin/register'
 
@@ -16,6 +16,9 @@ let isSimpleUiRegistered = false
  * Import from each plugin's `/register` subpath so only the registration stub is in the
  * initial bundle; plugin code loads when a trigger command runs.
  *
+ * When {@link AcApDocManager.disableExport} is true, HTML/SVG plugins are skipped and
+ * the PDF plugin only exposes `ipdf`.
+ *
  * `viewerRuntimeUrl` is configured on the HTML plugin — not on `AcApDocManager`.
  * Opening DXF/DWG does not require `@mlightcad/cad-html-plugin` or that file.
  */
@@ -25,17 +28,24 @@ export const registerLazyPlugins = (): void => {
   }
 
   const pluginManager = AcApDocManager.instance.pluginManager
-  registerLazyHtmlPlugin(pluginManager, {
-    viewerRuntimeUrl: HTML_VIEWER_RUNTIME_URL
-  })
-  registerLazyPdfPlugin(pluginManager)
-  registerLazySvgPlugin(pluginManager)
+  const disableExport = AcApDocManager.instance.disableExport
+
+  registerLazyPdfPlugin(pluginManager, { disableExport })
+  if (!disableExport) {
+    registerLazyHtmlPlugin(pluginManager, {
+      viewerRuntimeUrl: HTML_VIEWER_RUNTIME_URL
+    })
+    registerLazySvgPlugin(pluginManager)
+  }
 
   isLazyPluginRegistered = true
 }
 
 /**
  * Loads the simple UI plugin with this example's default toolbar layout.
+ *
+ * When {@link AcApDocManager.disableExport} is true, the export toolbar item is
+ * omitted via `toolbar.excludeItems`.
  *
  * @param host - Viewer pane element that hosts toolbar overlays.
  */
@@ -44,7 +54,9 @@ export const registerSimpleUi = async (host: HTMLElement): Promise<void> => {
     return
   }
 
-  await registerSimpleUiPlugin(AcApDocManager.instance.pluginManager, {
+  const disableExport = AcApDocManager.instance.disableExport
+
+  await acuiRegisterSimpleUiPlugin(AcApDocManager.instance.pluginManager, {
     host,
     dockPanel: {
       defaultOpen: false,
@@ -55,7 +67,9 @@ export const registerSimpleUi = async (host: HTMLElement): Promise<void> => {
     toolbar: {
       placement: 'right',
       items: 'default',
-      collapsible: true
+      collapsible: true,
+      // Keep export out of the default toolbar when createInstance({ disableExport: true }).
+      ...(disableExport ? { excludeItems: ['export'] } : {})
     }
   })
 
