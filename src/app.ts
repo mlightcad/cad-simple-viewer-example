@@ -33,6 +33,17 @@ interface OpenOptions {
   drawNoPlotLayers: boolean
   /** Whether geometry is shown incrementally while the file converts. */
   progressiveRendering: boolean
+  /** Whether the open progress overlay waits for deferred text geometry. */
+  waitForTextGeometry: boolean
+  /** Circle/arc tessellation sides ({@link AcApOpenDatabaseOptions.circleSides}). */
+  circleSides: number
+  /** Paper-space canvas background RGB (e.g. `0xffffff` white, `0x000000` black). */
+  paperSpaceBackground: number
+  /**
+   * When `true`, hide built-in export commands and skip HTML/SVG plugins
+   * (fixed after first {@link CadViewerApp.initialize}).
+   */
+  disableExport: boolean
   /** How the view is framed after open; omitted when the user selects **Auto**. */
   openViewMode?: AcApOpenViewMode
 }
@@ -115,6 +126,12 @@ export class CadViewerApp {
    * Used to warn when the user changes text rendering after the viewer is already running.
    */
   private initUseMainThreadDraw: boolean = false
+
+  /**
+   * `disableExport` value passed to the first {@link CadViewerApp.initialize} call.
+   * Used to warn when the user changes export availability after the viewer is already running.
+   */
+  private initDisableExport: boolean = false
 
   /**
    * Whether the user has opened at least one drawing in this session.
@@ -208,14 +225,73 @@ export class CadViewerApp {
     const openViewChoice = this.getSelectedValue('openViewMode') as OpenViewModeChoice
     const openViewMode =
       openViewChoice === 'auto' ? undefined : (openViewChoice as AcApOpenViewMode)
+    const circleSidesRaw = Number(this.getSelectedValue('circleSides'))
+    const paperBgRaw = Number.parseInt(
+      this.getSelectedValue('paperSpaceBackground') || 'ffffff',
+      16
+    )
 
     return {
       mode: Number(this.getSelectedValue('accessMode')) as AcEdOpenMode,
       useMainThreadDraw: this.getSelectedValue('textRendering') === 'main',
       drawNoPlotLayers: this.getSelectedValue('noPlotLayers') === 'true',
       progressiveRendering: this.getSelectedValue('progressiveRendering') === 'true',
+      waitForTextGeometry: this.getSelectedValue('waitForTextGeometry') === 'true',
+      circleSides: Number.isFinite(circleSidesRaw) ? circleSidesRaw : 50,
+      paperSpaceBackground: Number.isFinite(paperBgRaw) ? paperBgRaw : 0xffffff,
+      disableExport: this.getSelectedValue('disableExport') === 'true',
       openViewMode
     }
+  }
+
+  /**
+   * Builds {@link AcApOpenDatabaseOptions} from upload-screen choices, including
+   * paper-space background via `paperbkcolor`.
+   */
+  private buildDatabaseOpenOptions(
+    openOptions: OpenOptions,
+    layoutBackgroundColorFromRgb: (typeof import('@mlightcad/cad-simple-viewer'))['layoutBackgroundColorFromRgb'],
+    extras: Partial<AcApOpenDatabaseOptions> = {}
+  ): AcApOpenDatabaseOptions {
+    return {
+      mode: openOptions.mode,
+      drawNoPlotLayers: openOptions.drawNoPlotLayers,
+      progressiveRendering: openOptions.progressiveRendering,
+      waitForTextGeometry: openOptions.waitForTextGeometry,
+      circleSides: openOptions.circleSides,
+      sysVars: {
+        paperbkcolor: layoutBackgroundColorFromRgb(openOptions.paperSpaceBackground)
+      },
+      ...(openOptions.openViewMode != null
+        ? { openViewMode: openOptions.openViewMode }
+        : {}),
+      ...extras
+    }
+  }
+
+  /**
+   * Collects warnings when session-fixed options (text rendering / export) differ
+   * from the values used on first {@link CadViewerApp.initialize}.
+   *
+   * Callers should surface these after {@link CadViewerApp.clearMessages} so the
+   * toasts are not immediately removed.
+   */
+  private getSessionOptionWarnings(openOptions: OpenOptions): string[] {
+    if (!this.isInitialized) {
+      return []
+    }
+    const warnings: string[] = []
+    if (openOptions.useMainThreadDraw !== this.initUseMainThreadDraw) {
+      warnings.push(
+        'Text rendering mode applies on first load. Reload the page to change it.'
+      )
+    }
+    if (openOptions.disableExport !== this.initDisableExport) {
+      warnings.push(
+        'Export availability applies on first load. Reload the page to change it.'
+      )
+    }
+    return warnings
   }
 
   /**
@@ -230,6 +306,7 @@ export class CadViewerApp {
    * - `checkWorkersOnInit` — probe worker URLs after registration (see {@link WEBWORKER_FILE_URLS})
    * - `baseUrl` — optional CDN root for built-in resources (demo override)
    * - `useMainThreadDraw` — MTEXT render mode; fixed for the lifetime of the page session
+   * - `disableExport` — hides built-in export commands; fixed for the page session
    *
    * HTML export runtime (`viewer-runtime.iife.js`) is configured on the HTML plugin via
    * {@link registerPlugins} / `registerLazyHtmlPlugin({ viewerRuntimeUrl })` — not here.
@@ -241,10 +318,14 @@ export class CadViewerApp {
    * Idempotent: subsequent calls are no-ops once {@link CadViewerApp.isInitialized} is true.
    *
    * @param useMainThreadDraw - When `true`, MTEXT is rendered on the main thread instead of a worker
+   * @param disableExport - When `true`, hide export commands and skip HTML/SVG plugins
    * @returns `true` when the viewer is ready; `false` when worker checks or init failed
    * @remarks On failure, logs to the console and shows an error toast via {@link CadViewerApp.showMessage}.
    */
-  private async initialize(useMainThreadDraw: boolean): Promise<boolean> {
+  private async initialize(
+    useMainThreadDraw: boolean,
+    disableExport: boolean
+  ): Promise<boolean> {
     if (this.isInitialized) {
       return true
     }
@@ -284,7 +365,8 @@ export class CadViewerApp {
         baseUrl: 'https://cdn.jsdelivr.net/gh/mlightcad/cad-data@main/',
         webworkerFileUrls: WEBWORKER_FILE_URLS,
         checkWorkersOnInit: true,
-        useMainThreadDraw
+        useMainThreadDraw,
+        disableExport
       })
 
       const docManager = AcApDocManager.instance
@@ -319,6 +401,7 @@ export class CadViewerApp {
 
       this.isInitialized = true
       this.initUseMainThreadDraw = useMainThreadDraw
+      this.initDisableExport = disableExport
       return true
     } catch (error) {
       console.error('Failed to initialize CAD viewer:', error)
@@ -429,38 +512,37 @@ export class CadViewerApp {
    */
   private async createNewDrawing(): Promise<void> {
     const openOptions = this.readOpenOptions()
+    const sessionWarnings = this.getSessionOptionWarnings(openOptions)
 
     if (
-      this.isInitialized &&
-      openOptions.useMainThreadDraw !== this.initUseMainThreadDraw
+      !(await this.initialize(
+        openOptions.useMainThreadDraw,
+        openOptions.disableExport
+      ))
     ) {
-      this.showMessage(
-        'Text rendering mode applies on first load. Reload the page to change it.',
-        'info'
-      )
-    }
-
-    if (!(await this.initialize(openOptions.useMainThreadDraw))) {
       return
     }
 
     this.clearMessages()
 
     try {
-      const options: AcApOpenDatabaseOptions = {
-        mode: openOptions.mode,
-        drawNoPlotLayers: openOptions.drawNoPlotLayers,
-        progressiveRendering: openOptions.progressiveRendering,
-        ...(openOptions.openViewMode != null
-          ? { openViewMode: openOptions.openViewMode }
-          : {})
-      }
+      const { layoutBackgroundColorFromRgb } = await loadCadSimpleViewer()
+      const options = this.buildDatabaseOpenOptions(
+        openOptions,
+        layoutBackgroundColorFromRgb
+      )
 
       const success = await this.requireDocManager().instance.newDocument(options)
 
       if (success) {
         this.hideUploadScreen()
-        this.showMessage('New drawing created', 'success')
+        const base = 'New drawing created'
+        this.showMessage(
+          sessionWarnings.length > 0
+            ? `${base}. ${sessionWarnings.join(' ')}`
+            : base,
+          sessionWarnings.length > 0 ? 'info' : 'success'
+        )
       } else {
         this.showUploadScreen()
         this.showMessage('Failed to create new drawing', 'error')
@@ -524,18 +606,14 @@ export class CadViewerApp {
    */
   private async loadFile(file: File): Promise<void> {
     const openOptions = this.readOpenOptions()
+    const sessionWarnings = this.getSessionOptionWarnings(openOptions)
 
     if (
-      this.isInitialized &&
-      openOptions.useMainThreadDraw !== this.initUseMainThreadDraw
+      !(await this.initialize(
+        openOptions.useMainThreadDraw,
+        openOptions.disableExport
+      ))
     ) {
-      this.showMessage(
-        'Text rendering mode applies on first load. Reload the page to change it.',
-        'info'
-      )
-    }
-
-    if (!(await this.initialize(openOptions.useMainThreadDraw))) {
       return
     }
 
@@ -558,16 +636,12 @@ export class CadViewerApp {
       }
 
       const fileContent = await this.readFile(file)
-
-      const options: AcApOpenDatabaseOptions = {
-        minimumChunkSize: 1000,
-        mode: openOptions.mode,
-        drawNoPlotLayers: openOptions.drawNoPlotLayers,
-        progressiveRendering: openOptions.progressiveRendering,
-        ...(openOptions.openViewMode != null
-          ? { openViewMode: openOptions.openViewMode }
-          : {})
-      }
+      const { layoutBackgroundColorFromRgb } = await loadCadSimpleViewer()
+      const options = this.buildDatabaseOpenOptions(
+        openOptions,
+        layoutBackgroundColorFromRgb,
+        { minimumChunkSize: 1000 }
+      )
 
       const success = await docManager.openDocument(
         file.name,
@@ -577,7 +651,13 @@ export class CadViewerApp {
 
       if (success) {
         this.hideUploadScreen()
-        this.showMessage(`Successfully loaded: ${file.name}`, 'success')
+        const base = `Successfully loaded: ${file.name}`
+        this.showMessage(
+          sessionWarnings.length > 0
+            ? `${base}. ${sessionWarnings.join(' ')}`
+            : base,
+          sessionWarnings.length > 0 ? 'info' : 'success'
+        )
       } else {
         this.showUploadScreen()
         this.showMessage(`Failed to load: ${file.name}`, 'error')
