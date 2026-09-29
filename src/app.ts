@@ -33,8 +33,6 @@ interface OpenOptions {
   drawNoPlotLayers: boolean
   /** Whether geometry is shown incrementally while the file converts. */
   progressiveRendering: boolean
-  /** Whether the open progress overlay waits for deferred text geometry. */
-  waitForTextGeometry: boolean
   /** Circle/arc tessellation sides ({@link AcApOpenDatabaseOptions.circleSides}). */
   circleSides: number
   /** Paper-space canvas background RGB (e.g. `0xffffff` white, `0x000000` black). */
@@ -236,7 +234,6 @@ export class CadViewerApp {
       useMainThreadDraw: this.getSelectedValue('textRendering') === 'main',
       drawNoPlotLayers: this.getSelectedValue('noPlotLayers') === 'true',
       progressiveRendering: this.getSelectedValue('progressiveRendering') === 'true',
-      waitForTextGeometry: this.getSelectedValue('waitForTextGeometry') === 'true',
       circleSides: Number.isFinite(circleSidesRaw) ? circleSidesRaw : 50,
       paperSpaceBackground: Number.isFinite(paperBgRaw) ? paperBgRaw : 0xffffff,
       disableExport: this.getSelectedValue('disableExport') === 'true',
@@ -257,7 +254,6 @@ export class CadViewerApp {
       mode: openOptions.mode,
       drawNoPlotLayers: openOptions.drawNoPlotLayers,
       progressiveRendering: openOptions.progressiveRendering,
-      waitForTextGeometry: openOptions.waitForTextGeometry,
       circleSides: openOptions.circleSides,
       sysVars: {
         paperbkcolor: layoutBackgroundColorFromRgb(openOptions.paperSpaceBackground)

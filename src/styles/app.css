@@ -125,7 +125,7 @@ body {
 .upload-main {
   display: flex;
   flex-direction: column;
-  justify-content: center;
+  min-height: 0;
   padding: 18px 20px;
 }
 
@@ -175,7 +175,9 @@ body {
 
 .upload-actions {
   display: flex;
+  flex: 1;
   flex-direction: column;
+  min-height: 0;
   gap: 0;
 }
 
@@ -229,9 +231,12 @@ body {
 
 .upload-dropzone {
   display: flex;
+  flex: 1;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
   width: 100%;
+  min-height: 120px;
   box-sizing: border-box;
   padding: 14px 12px;
   border: 1.5px dashed #c7d2fe;
@@ -308,7 +313,8 @@ body {
 
 .settings-grid {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  /* Six tracks so a row of three options is thirds and a row of two is halves. */
+  grid-template-columns: repeat(6, minmax(0, 1fr));
   gap: 10px 12px;
 }
 
@@ -316,10 +322,15 @@ body {
   display: flex;
   flex-direction: column;
   gap: 4px;
+  grid-column: span 2;
 }
 
 .setting-block--full {
   grid-column: 1 / -1;
+}
+
+.setting-block--half {
+  grid-column: span 3;
 }
 
 .setting-label {
@@ -429,6 +440,11 @@ body {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
+  .setting-block,
+  .setting-block--half {
+    grid-column: auto;
+  }
+
   .setting-block--full {
     grid-column: 1 / -1;
   }
@@ -463,6 +479,8 @@ body {
     grid-template-columns: 1fr;
   }
 
+  .setting-block,
+  .setting-block--half,
   .setting-block--full {
     grid-column: auto;
   }
