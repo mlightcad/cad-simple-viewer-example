@@ -30,32 +30,27 @@
               </section>
 
               <div class="upload-actions">
-                <button type="button" class="new-drawing-button" id="newDrawingButton">
-                  New Drawing
-                </button>
-
-                <p class="upload-divider" aria-hidden="true"><span>or</span></p>
-
-                <div class="upload-dropzone" id="uploadDropzone" role="button" tabindex="0">
-                  <div class="dropzone-content">
-                    <p class="dropzone-title">
-                      Drop file or <span class="dropzone-link">browse</span>
-                    </p>
-                    <div class="format-tags">
-                      <span class="format-tag">DWG</span>
-                      <span class="format-tag">DXF</span>
-                    </div>
-                  </div>
-                </div>
+                <div id="fileOpenHost" class="file-open-host"></div>
               </div>
+
+              <p class="font-cdn-notice">
+                If you are in a country or region with network access restrictions, please turn on a VPN. Default font files are hosted on GitHub; when access is limited they load very slowly, which can make opening drawings slow or cause text not to display correctly.
+              </p>
             </div>
 
-            <section class="settings-section">
-              <header class="settings-header">
+            <section class="settings-section is-expanded" id="settingsSection">
+              <button
+                type="button"
+                class="settings-header"
+                id="settingsHeader"
+                aria-expanded="true"
+                aria-controls="open-options-panel"
+              >
                 <h2 class="settings-title">Open options</h2>
-              </header>
+                <span class="settings-chevron" aria-hidden="true">&#x25BC;</span>
+              </button>
 
-              <div class="settings-grid">
+              <div id="open-options-panel" class="settings-grid">
                 <div class="setting-block setting-block--full">
                   <h3 class="setting-label">Initial view</h3>
                   <div class="pill-segment" data-option-group="openViewMode" role="radiogroup" aria-label="Initial view">
@@ -137,7 +132,6 @@
       </button>
 
       <section class="viewer-canvas-area" aria-label="Drawing canvas">
-        <input type="file" id="fileInputElement" accept=".dxf,.dwg" />
         <div id="cad-container"></div>
       </section>
     </div>

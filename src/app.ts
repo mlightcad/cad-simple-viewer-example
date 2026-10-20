@@ -2,7 +2,8 @@ import type {
   AcApDocManager,
   AcApOpenDatabaseOptions,
   AcApOpenViewMode,
-  AcEdOpenMode
+  AcEdOpenMode,
+  AcUiFileOpenPanel
 } from '@mlightcad/cad-simple-viewer'
 import {
   loadCadSimpleViewer,
@@ -10,6 +11,9 @@ import {
   scheduleViewerPreload
 } from './viewerLoader'
 import { WEBWORKER_FILE_URLS } from './workerConfig'
+
+/** Matches cad-viewer-example FileUpload mobile collapse breakpoint. */
+const MOBILE_MAX_WIDTH = '(max-width: 768px)'
 
 /**
  * Toast notification severity used by {@link CadViewerApp.showMessage}.
@@ -62,9 +66,10 @@ export interface CadViewerAppOptions {
  *
  * Responsibilities:
  * - Keep the homepage free of a static `@mlightcad/cad-simple-viewer` import
+ * - Mount {@link AcUiFileOpenPanel} on the landing screen (local / URL / new drawing)
  * - Preload viewer JS after first paint, then create the viewer on first file open
  * - Optionally register demo commands, lazy export plugins, and the simple UI plugin
- * - Handle local DXF/DWG file open with configurable open options
+ * - Handle local / URL DXF/DWG open with configurable open options
  * - Reflect document state in the DOM (upload screen vs viewer)
  *
  * The viewer package and `AcApDocManager.createInstance` are deferred until needed;
@@ -90,16 +95,16 @@ export class CadViewerApp {
   private uploadScreen: HTMLElement
 
   /**
-   * Click/drop target inside the upload panel that triggers the hidden file input.
-   * Corresponds to `#uploadDropzone` in the page HTML.
+   * Host element for {@link AcUiFileOpenPanel} on the upload screen.
+   * Corresponds to `#fileOpenHost` in the page HTML.
    */
-  private uploadDropzone: HTMLElement
+  private fileOpenHost: HTMLElement
 
   /**
-   * Hidden `<input type="file">` used to pick local `.dxf` / `.dwg` files.
-   * Corresponds to `#fileInputElement`.
+   * Landing-page open panel (local file / URL / new drawing).
+   * Created asynchronously via {@link CadViewerApp.mountFileOpenPanel}.
    */
-  private fileInput: HTMLInputElement
+  private fileOpenPanel: AcUiFileOpenPanel | null = null
 
   /**
    * Compact **Open** control shown in the viewer corner after a file loads successfully.
@@ -108,10 +113,38 @@ export class CadViewerApp {
   private reopenButton: HTMLButtonElement
 
   /**
-   * **New Drawing** button on the upload screen.
-   * Corresponds to `#newDrawingButton` in the page HTML.
+   * Collapsible open-options section on the upload screen.
+   * Corresponds to `#settingsSection` in the page HTML.
    */
-  private newDrawingButton: HTMLButtonElement
+  private settingsSection: HTMLElement
+
+  /**
+   * Button that toggles open options on narrow viewports.
+   * Corresponds to `#settingsHeader` in the page HTML.
+   */
+  private settingsHeader: HTMLButtonElement
+
+  /**
+   * Grid of open-option pills; hidden when settings are collapsed on mobile.
+   * Corresponds to `#open-options-panel` in the page HTML.
+   */
+  private settingsPanel: HTMLElement
+
+  /**
+   * Whether the viewport currently matches the mobile upload layout.
+   */
+  private isMobileLayout = false
+
+  /**
+   * Whether open options are expanded while in the mobile layout.
+   * Desktop always shows the options (see {@link CadViewerApp.syncSettingsExpanded}).
+   */
+  private settingsExpanded = true
+
+  /**
+   * `matchMedia` listener for the mobile upload breakpoint; cleared on page unload only.
+   */
+  private mobileMediaQuery: MediaQueryList | null = null
 
   /**
    * Whether {@link AcApDocManager.createInstance} has completed for this page session.
@@ -163,17 +196,20 @@ export class CadViewerApp {
     this.container = document.getElementById('cad-container') as HTMLDivElement
     this.viewerPane = document.getElementById('viewerPane') as HTMLElement
     this.uploadScreen = document.getElementById('uploadScreen') as HTMLElement
-    this.uploadDropzone = document.getElementById('uploadDropzone') as HTMLElement
-    this.fileInput = document.getElementById('fileInputElement') as HTMLInputElement
+    this.fileOpenHost = document.getElementById('fileOpenHost') as HTMLElement
     this.reopenButton = document.getElementById('reopenButton') as HTMLButtonElement
-    this.newDrawingButton = document.getElementById(
-      'newDrawingButton'
+    this.settingsSection = document.getElementById('settingsSection') as HTMLElement
+    this.settingsHeader = document.getElementById(
+      'settingsHeader'
     ) as HTMLButtonElement
+    this.settingsPanel = document.getElementById(
+      'open-options-panel'
+    ) as HTMLElement
 
     this.setupOptionGroups()
-    this.setupFileHandling()
-    this.setupNewDrawingHandling()
+    this.setupSettingsCollapse()
     this.setupReopenHandling()
+    void this.mountFileOpenPanel()
     scheduleViewerPreload(this.enablePlugins)
   }
 
@@ -438,56 +474,89 @@ export class CadViewerApp {
   }
 
   /**
-   * Attaches drag-and-drop, keyboard, and `change` listeners for local file open.
+   * Mounts {@link AcUiFileOpenPanel} into `#fileOpenHost` (same component used by
+   * cad-viewer-example's landing panel).
    *
-   * Clears the hidden file input value after each selection so the same file can be chosen again.
+   * Loads `@mlightcad/cad-simple-viewer` dynamically so the entry stays free of a
+   * static viewer import. Local file, URL, and new-drawing actions reuse the
+   * existing open-option pills on the right.
    */
-  private setupFileHandling(): void {
-    this.uploadDropzone.addEventListener('click', () => {
-      this.fileInput.click()
+  private async mountFileOpenPanel(): Promise<void> {
+    if (this.fileOpenPanel) {
+      return
+    }
+
+    try {
+      const { AcUiFileOpenPanel } = await loadCadSimpleViewer()
+      this.fileOpenPanel = new AcUiFileOpenPanel({
+        host: this.fileOpenHost,
+        theme: 'light',
+        showNewDrawing: true,
+        getSources: () => [],
+        onLocalFile: file => {
+          void this.loadFile(file)
+        },
+        onUrl: url => {
+          void this.loadUrl(url)
+        },
+        onNewDrawing: () => {
+          void this.createNewDrawing()
+        }
+      })
+    } catch (error) {
+      console.error('Failed to mount file open panel:', error)
+      this.showMessage('Failed to load open panel', 'error')
+    }
+  }
+
+  /**
+   * Collapses open options on narrow viewports (≤768px), matching cad-viewer-example.
+   *
+   * Desktop always keeps the options visible; only mobile can toggle via the header.
+   */
+  private setupSettingsCollapse(): void {
+    this.mobileMediaQuery = window.matchMedia(MOBILE_MAX_WIDTH)
+    this.syncMobileLayout()
+    this.mobileMediaQuery.addEventListener('change', () => {
+      this.syncMobileLayout()
     })
 
-    this.uploadDropzone.addEventListener('keydown', event => {
-      if (event.key === 'Enter' || event.key === ' ') {
-        event.preventDefault()
-        this.fileInput.click()
+    this.settingsHeader.addEventListener('click', () => {
+      if (!this.isMobileLayout) {
+        return
       }
-    })
-
-    this.uploadDropzone.addEventListener('dragover', event => {
-      event.preventDefault()
-      this.uploadDropzone.classList.add('is-dragover')
-    })
-
-    this.uploadDropzone.addEventListener('dragleave', () => {
-      this.uploadDropzone.classList.remove('is-dragover')
-    })
-
-    this.uploadDropzone.addEventListener('drop', event => {
-      event.preventDefault()
-      this.uploadDropzone.classList.remove('is-dragover')
-      const file = event.dataTransfer?.files?.[0]
-      if (file) {
-        void this.loadFile(file)
-      }
-    })
-
-    this.fileInput.addEventListener('change', event => {
-      const file = (event.target as HTMLInputElement).files?.[0]
-      if (file) {
-        void this.loadFile(file)
-      }
-      this.fileInput.value = ''
+      this.settingsExpanded = !this.settingsExpanded
+      this.syncSettingsExpanded()
     })
   }
 
   /**
-   * Creates a blank drawing when the upload-screen **New Drawing** button is clicked.
+   * Syncs {@link CadViewerApp.isMobileLayout} from the media query and resets
+   * expansion when crossing the mobile/desktop breakpoint.
    */
-  private setupNewDrawingHandling(): void {
-    this.newDrawingButton.addEventListener('click', () => {
-      void this.createNewDrawing()
-    })
+  private syncMobileLayout(): void {
+    const matches = this.mobileMediaQuery?.matches ?? false
+    const wasMobile = this.isMobileLayout
+    this.isMobileLayout = matches
+    if (matches && !wasMobile) {
+      this.settingsExpanded = false
+    } else if (!matches) {
+      this.settingsExpanded = true
+    }
+    this.syncSettingsExpanded()
+  }
+
+  /**
+   * Applies expanded/collapsed state to the settings section DOM.
+   *
+   * On desktop the options are always shown even if {@link CadViewerApp.settingsExpanded}
+   * is false.
+   */
+  private syncSettingsExpanded(): void {
+    const expanded = !this.isMobileLayout || this.settingsExpanded
+    this.settingsSection.classList.toggle('is-expanded', expanded)
+    this.settingsHeader.setAttribute('aria-expanded', String(expanded))
+    this.settingsPanel.hidden = !expanded
   }
 
   /**
@@ -598,7 +667,7 @@ export class CadViewerApp {
    * 4. {@link CadViewerApp.readFile} → `openDocument` with upload-screen options
    * 5. On success, {@link CadViewerApp.hideUploadScreen} and a success toast; on failure, {@link CadViewerApp.showUploadScreen}
    *
-   * @param file - User-selected file from the file input or drop zone
+   * @param file - User-selected file from {@link AcUiFileOpenPanel}
    */
   private async loadFile(file: File): Promise<void> {
     const openOptions = this.readOpenOptions()
@@ -662,6 +731,71 @@ export class CadViewerApp {
       console.error('Error loading file:', error)
       this.showUploadScreen()
       this.showMessage(`Error loading file: ${error}`, 'error')
+    }
+  }
+
+  /**
+   * Opens a drawing from a remote URL chosen in {@link AcUiFileOpenPanel}.
+   *
+   * @param url - Absolute or same-origin URL to a `.dxf` / `.dwg` file
+   */
+  private async loadUrl(url: string): Promise<void> {
+    const trimmed = url.trim()
+    if (!trimmed) {
+      this.showMessage('Please enter a URL', 'error')
+      return
+    }
+
+    const openOptions = this.readOpenOptions()
+    const sessionWarnings = this.getSessionOptionWarnings(openOptions)
+
+    if (
+      !(await this.initialize(
+        openOptions.useMainThreadDraw,
+        openOptions.disableExport
+      ))
+    ) {
+      return
+    }
+
+    this.clearMessages()
+
+    try {
+      const docManager = this.requireDocManager().instance
+      if (!(await docManager.areWorkersReady())) {
+        this.showMessage(
+          'CAD worker scripts are not reachable. Check deployment of assets/*-worker.js.',
+          'error'
+        )
+        return
+      }
+
+      const { layoutBackgroundColorFromRgb } = await loadCadSimpleViewer()
+      const options = this.buildDatabaseOpenOptions(
+        openOptions,
+        layoutBackgroundColorFromRgb,
+        { minimumChunkSize: 1000 }
+      )
+
+      const success = await docManager.openUrl(trimmed, options)
+
+      if (success) {
+        this.hideUploadScreen()
+        const base = `Successfully loaded: ${trimmed}`
+        this.showMessage(
+          sessionWarnings.length > 0
+            ? `${base}. ${sessionWarnings.join(' ')}`
+            : base,
+          sessionWarnings.length > 0 ? 'info' : 'success'
+        )
+      } else {
+        this.showUploadScreen()
+        this.showMessage(`Failed to load: ${trimmed}`, 'error')
+      }
+    } catch (error) {
+      console.error('Error loading URL:', error)
+      this.showUploadScreen()
+      this.showMessage(`Error loading URL: ${error}`, 'error')
     }
   }
 

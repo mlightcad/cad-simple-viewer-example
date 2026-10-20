@@ -75,8 +75,9 @@ function createToolbarItems(): AcUiToolbarItemConfig[] {
   return [
     acuiToolbarPreset('select'),
     acuiToolbarPreset('pan'),
-    acuiToolbarPreset('zoom-extent'),
-    acuiToolbarPreset('zoom-window'),
+    // Single zoom parent with sub-toolbar (saved / extents / smart / window),
+    // matching cad-viewer packages/cad-simple-viewer-example default toolbar.
+    acuiToolbarPreset('zoom'),
     acuiToolbarPreset('layer'),
     acuiToolbarPreset('layout'),
     acuiToolbarPreset('measure'),
@@ -152,6 +153,27 @@ export const registerSimpleUi = async (host: HTMLElement): Promise<void> => {
       collapsible: true,
       // Keep export out of the default toolbar when createInstance({ disableExport: true }).
       ...(disableExport ? { excludeItems: ['export'] } : {})
+    },
+    // Phone layout: stretch bottom bar + labeled zoom/measure sub-toolbars
+    // (same as packages/cad-simple-viewer-example).
+    layouts: {
+      phone: {
+        toolbar: {
+          placement: 'bottom',
+          showLabels: true,
+          size: 'stretch',
+          edgeOffset: 0,
+          collapsible: false,
+          inCanvasParent: true,
+          subToolbar: {
+            showLabels: true,
+            showSeparators: false,
+            size: 'stretch',
+            overflow: 'wrap',
+            replaceOnNested: true
+          }
+        }
+      }
     }
   })
 
